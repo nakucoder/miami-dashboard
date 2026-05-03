@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const W = "http://localhost:8000/weather";
-const C = "http://localhost:8001/prices";
-const S = "http://localhost:8002/prices";
+const W = "http://18.118.107.138:8000/weather";
+const C = "http://18.118.107.138:8001/prices";
+const S = "http://18.118.107.138:8002/prices";
 
 export default function App() {
   const [weather, setWeather] = useState(null);
