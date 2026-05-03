@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const W = "http://18.118.107.138:8000/weather";
-const C = "http://18.118.107.138:8001/prices";
-const S = "http://18.118.107.138:8002/prices";
+const W = "https://miami-dashboard.duckdns.org/weather";
+const C = "https://miami-dashboard.duckdns.org/crypto";
+const S = "https://miami-dashboard.duckdns.org/stocks";
 
 export default function App() {
   const [weather, setWeather] = useState(null);
