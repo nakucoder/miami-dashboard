@@ -1,16 +1,47 @@
-# React + Vite
+# Miami Data Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A live data dashboard displaying real-time weather, crypto, and stock market data for Miami, FL.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Live Weather** — Current conditions, feels like, humidity, wind, high/low, sunrise/sunset, and 6-hour hourly forecast for Miami, FL
+- **Crypto Prices** — Real-time BTC, ETH, and SOL prices with 24h change, high/low, and volume
+- **Stock Market** — Live prices for NVDA, AAPL, MSFT, VOO, and AMZN with change % and volume. Shows Friday's closing prices on weekends with a market closed banner.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend** — React, Vite, inline styles, Bento Grid layout
+- **Backend** — Three FastAPI microservices running in Docker containers
+- **Data Sources** — Open-Meteo (weather), CoinGecko (crypto), Alpha Vantage (stocks)
+- **Storage** — AWS S3 for persistent data snapshots
+- **Scheduling** — APScheduler runs each pipeline every 60 minutes
 
-## Expanding the ESLint configuration
+## Architecture
+## Running Locally
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Start the three pipeline containers:
+
+```bash
+cd ~/weather-pipeline && docker-compose up -d
+cd ~/crypto-pipeline && docker-compose up -d
+cd ~/stock-pipeline && docker-compose up -d
+```
+
+Start the dashboard:
+
+```bash
+cd ~/miami-dashboard && npm run dev
+```
+
+Open http://localhost:5173
+
+## Related Repositories
+
+- [weather-pipeline](https://github.com/nakucoder/weather-pipeline)
+- [crypto-pipeline](https://github.com/nakucoder/crypto-pipeline)
+- [stock-pipeline](https://github.com/nakucoder/stock-pipeline)
+- [miami-data-pipeline](https://github.com/nakucoder/miami-data-pipeline)
+
+## Author
+
+Built by **Juan Spinelli** · FastAPI + Docker + AWS S3
