@@ -371,21 +371,17 @@ export default function App() {
         minHeight: 0,
       }} className="top-section">
         {isMobilePortrait ? (
-          /* PORTRAIT MOBILE: Carousel with swipe and dots */
-          <div className="carousel" style={{ position: 'relative', flex: 1, height: '100%', minHeight: 0, overflowX: 'hidden', overflowY: 'scroll' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-            <div className="carousel-inner" style={{ display: 'flex', width: '300%', height: '100%', transform: `translateX(${-activeIndex * 33.333}%)`, transition: 'transform 0.3s ease', flexShrink: 0 }}>
-              <div style={{ flex: '0 0 calc(100% / 3)', ...tile({ justifyContent: "space-between", boxSizing: 'border-box', overflow: 'auto' }), height: '100%', minHeight: 0, overflowY: 'scroll' }}>
-                {renderWeatherCard()}
-              </div>
-              <div style={{ flex: '0 0 calc(100% / 3)', ...tile({ justifyContent: "space-evenly", boxSizing: 'border-box', overflow: 'auto' }), height: '100%', minHeight: 0, overflowY: 'scroll' }}>
-                {renderCryptoCard()}
-              </div>
-              <div style={{ flex: '0 0 calc(100% / 3)', ...tile({ justifyContent: "space-evenly", boxSizing: 'border-box', overflow: 'auto' }), height: '100%', minHeight: 0, overflowY: 'scroll' }}>
-                {renderStocksCard()}
-              </div>
+          /* PORTRAIT MOBILE: Single active card, swipe to switch */
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#0d1526', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', padding: '16px' }}>
+              {activeIndex === 0 && renderWeatherCard()}
+              {activeIndex === 1 && renderCryptoCard()}
+              {activeIndex === 2 && renderStocksCard()}
             </div>
-            <div className="dots" style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 10 }}>
-              {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.3)' }} />)}
+            <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '8px 0' }}>
+              {[0,1,2].map(i => (
+                <div key={i} onClick={() => setActiveIndex(i)} style={{ width: 8, height: 8, borderRadius: '50%', background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.3)', cursor: 'pointer' }} />
+              ))}
             </div>
           </div>
         ) : (
