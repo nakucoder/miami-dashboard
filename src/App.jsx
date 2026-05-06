@@ -11,6 +11,10 @@ export default function App() {
   const [stocks, setStocks] = useState(null);
   const [updated, setUpdated] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
+  const [isMobilePortrait, setIsMobilePortrait] = useState(window.innerWidth <= 768 && window.innerHeight > window.innerWidth);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -22,6 +26,18 @@ export default function App() {
   };
 
   useEffect(() => { fetchAll(); const i = setInterval(fetchAll, 60000); return () => clearInterval(i); }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobilePortrait(window.innerWidth <= 768 && window.innerHeight > window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   const feelsLike = (f, kmh) => { const v = kmh / 1.60934; return (v >= 3 && f <= 50) ? Math.round(35.74 + 0.6215*f - 35.75*Math.pow(v,0.16) + 0.4275*f*Math.pow(v,0.16)) : f; };
   const wmoCondition = (code) => { const m={0:"Clear Sky",1:"Mainly Clear",2:"Partly Cloudy",3:"Overcast",45:"Foggy",48:"Icy Fog",51:"Light Drizzle",53:"Drizzle",55:"Heavy Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",71:"Light Snow",73:"Snow",75:"Heavy Snow",80:"Rain Showers",81:"Rain Showers",82:"Heavy Showers",95:"Thunderstorm",96:"Thunderstorm",99:"Thunderstorm"}; return (code != null && m[code]) ? m[code] : (code == null ? "Clear Sky" : "Partly Cloudy"); };
@@ -60,6 +76,240 @@ export default function App() {
 
   const cryptoCoins = [["bitcoin","Bitcoin","BTC"],["ethereum","Ethereum","ETH"],["solana","Solana","SOL"]];
 
+  const handleTouchStart = (e) => setTouchStartX(e.touches[0].clientX);
+  const handleTouchEnd = (e) => {
+    const endX = e.changedTouches[0].clientX;
+    setTouchEndX(endX);
+    const diff = touchStartX - endX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        setActiveIndex((prev) => (prev + 1) % 3);
+      } else {
+        setActiveIndex((prev) => (prev - 1 + 3) % 3);
+      }
+    }
+  };
+
+  const renderWeatherCard = () => (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexShrink: 0 }}>
+        <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: 12 }}>⛅ Weather</span>
+        <span style={{ fontSize: 10, color: "#64748b" }}>Miami, FL</span>
+      </div>
+      {!weather ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 8 }}>
+          <Skeleton w="56px" h="56px" br="50%" />
+          <Skeleton w="100px" h="32px" />
+          <Skeleton w="80px" h="12px" />
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+          <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 8 }} className="icon">{wmoIcon(weather.data.weather_code, weather.data.is_day)}</div>
+          <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1, letterSpacing: -1, fontFamily: "monospace" }} className="temperature">{weather.data.temperature_fahrenheit}°</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{wmoCondition(weather.data.weather_code)}</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Feels like {feelsLike(weather.data.temperature_fahrenheit, weather.data.wind_speed_kmh)}°F</div>
+        </div>
+      )}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8, flexShrink: 0 }}>
+        {!weather ? (
+          <>
+            <Skeleton w="100%" h="10px" mb="4px" />
+            <Skeleton w="100%" h="10px" mb="4px" />
+            <Skeleton w="100%" h="10px" />
+          </>
+        ) : (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 10, color: "#64748b", marginBottom: 4 }}>
+              <span><span style={{ color: "#ff6b6b" }}>H</span> {wxHL.high != null ? wxHL.high : "—"}°</span>
+              <span><span style={{ color: "#3b82f6" }}>L</span> {wxHL.low != null ? wxHL.low : "—"}°</span>
+              <span>☀ {formatTime(weather.data.sunrise) || "6:32 AM"}</span>
+              <span>🌙 {formatTime(weather.data.sunset) || "7:48 PM"}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 10, color: "#64748b" }} className="details">
+              <span>💧 {weather.data.relative_humidity ?? weather.data.humidity ?? "—"}%</span>
+              <span>💨 {weather.data.wind_speed_kmh} km/h</span>
+            </div>
+          </>
+        )}
+      </div>
+      {/* Hourly Forecast Compact */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8, marginTop: 8, flexShrink: 0 }} className="hourly">
+        {!weather?.data?.hourly_forecast ? (
+          <div style={{ display: "flex", gap: 6, justifyContent: "space-around" }}>
+            {[0,1,2,3,4,5].map(i => <Skeleton key={i} w="22px" h="32px" br="4px" />)}
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 6, justifyContent: "space-around" }}>
+            {weather.data.hourly_forecast.slice(0, 6).map((h, i) => (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontSize: 9, minWidth: 0 }}>
+                <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{i === 0 ? "Now" : formatHour(h.time)}</span>
+                <span style={{ fontSize: 14 }}>{(h.precipitation_probability || 0) > 30 ? "🌧" : "☀"}</span>
+                <span style={{ fontFamily: "monospace", fontWeight: 600 }}>{h.temperature_fahrenheit}°</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const renderCryptoCard = () => (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
+        <span style={{ color: "#f59e0b", fontWeight: 700, fontSize: 12 }}>₿ Crypto</span>
+      </div>
+      {cryptoCoins.map(([k, name, sym]) => {
+        const coin = crypto?.data?.prices?.[k];
+        if (!coin) {
+          return (
+            <div key={k} style={{
+              flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around",
+              padding: "10px", borderRadius: 10,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(248,165,194,0.1)",
+            }}>
+              <div><Skeleton w="48px" h="48px" br="50%" /></div>
+              <Skeleton w="100%" h="20px" />
+              <Skeleton w="100%" h="40px" />
+            </div>
+          );
+        }
+        const isUp = coin.change_24h_percent >= 0;
+        const sparklineData = [30, 65, 45, 72, 55, 80, 50];
+        return (
+          <div key={k} style={{
+            flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around",
+            padding: "12px", borderRadius: 10,
+            background: "rgba(255,255,255,0.02)",
+            border: `2px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
+            boxShadow: `0 0 12px ${isUp ? "rgba(0,255,136,0.1)" : "rgba(255,71,87,0.1)"}, inset 0 0 20px ${isUp ? "rgba(0,255,136,0.05)" : "rgba(255,71,87,0.05)"}`,
+            animation: `glow 2s ease-in-out infinite`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: "50%",
+                background: `linear-gradient(135deg, ${isUp ? "#00ff88" : "#ff4757"}, ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"})`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 18, fontWeight: 700, color: "#fff", flexShrink: 0,
+                boxShadow: `0 0 16px ${isUp ? "rgba(0,255,136,0.4)" : "rgba(255,71,87,0.4)"}`,
+              }}>{sym[0]}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }}>{sym}</div>
+                <div style={{ fontSize: 10, color: "#64748b" }}>{name}</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "monospace", color: "#f1f5f9" }}>${coin.price_usd.toLocaleString()}</div>
+            <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 32, justifyContent: "space-between" }}>
+              {sparklineData.map((h, i) => (
+                <div key={i} style={{
+                  flex: 1, height: `${(h / 80) * 100}%`,
+                  background: `linear-gradient(180deg, ${isUp ? "#00ff88" : "#ff4757"}, ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"})`,
+                  borderRadius: "2px 2px 0 0",
+                  opacity: 0.7,
+                }} />
+              ))}
+            </div>
+            <div style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: isUp ? "rgba(0,255,136,0.15)" : "rgba(255,71,87,0.15)",
+              color: isUp ? "#00ff88" : "#ff4757",
+              padding: "6px 12px", borderRadius: 20,
+              fontSize: 13, fontWeight: 700, fontFamily: "monospace",
+              border: `1px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
+              width: "fit-content", margin: "0 auto",
+            }}>{isUp?"▲":"▼"} {Math.abs(coin.change_24h_percent).toFixed(2)}%</div>
+          </div>
+        );
+      })}
+    </>
+  );
+
+  const renderStocksCard = () => (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexShrink: 0 }}>
+        <span style={{ color: "#a855f7", fontWeight: 700, fontSize: 12 }}>📈 Stocks</span>
+        {marketClosed && !hasStockData ? (
+          <span style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7", padding: "2px 6px", borderRadius: 4, fontSize: 9, fontWeight: 600 }}>Closed</span>
+        ) : (
+          <span style={{ fontSize: 9, color: "#64748b" }}>{hasStockData ? lastTradingDay() : "—"}</span>
+        )}
+      </div>
+
+      {marketClosed && (
+        <div style={{
+          background: "rgba(168,85,247,0.06)", borderRadius: 6, padding: "6px 8px",
+          display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexShrink: 0, fontSize: 9,
+        }}>
+          <span>🔒</span>
+          <div>
+            <div style={{ fontWeight: 600, color: "#a855f7" }}>Market Closed</div>
+            <div style={{ color: "#64748b", lineHeight: 1.2 }}>Showing {lastTradingDay()}'s data</div>
+          </div>
+        </div>
+      )}
+
+      {!hasStockData ? (
+        <>
+          {["NVDA","AAPL","MSFT","VOO","AMZN"].map(sym => (
+            <div key={sym} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around", padding: "10px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(168,85,247,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#a855f7" }}>{sym[0]}</div>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>{sym}</span>
+              </div>
+              <Skeleton w="100%" h="20px" />
+              <Skeleton w="100%" h="8px" />
+            </div>
+          ))}
+        </>
+      ) : (
+        Object.entries(stocks.data.stocks).map(([sym, stock]) => {
+          const change = parseFloat(stock.change_percent);
+          const isUp = change >= 0;
+          return (
+            <div key={sym} style={{
+              flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around",
+              padding: "10px", borderRadius: 8,
+              background: "rgba(255,255,255,0.02)",
+              borderLeft: `4px solid ${isUp ? "#00ff88" : "#ff4757"}`,
+              border: `1px solid ${isUp ? "rgba(0,255,136,0.2)" : "rgba(255,71,87,0.2)"}`,
+              borderLeftWidth: "4px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 6,
+                    background: isUp ? "rgba(0,255,136,0.15)" : "rgba(255,71,87,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 11, fontWeight: 700, color: isUp ? "#00ff88" : "#ff4757",
+                    border: `1px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
+                  }}>{sym[0]}</div>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{sym}</span>
+                </div>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  background: isUp ? "rgba(0,255,136,0.15)" : "rgba(255,71,87,0.15)",
+                  color: isUp ? "#00ff88" : "#ff4757",
+                  padding: "4px 10px", borderRadius: 16,
+                  fontSize: 11, fontWeight: 700, fontFamily: "monospace",
+                  border: `1px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
+                }}>{isUp?"▲":"▼"} {Math.abs(change).toFixed(2)}%</div>
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "monospace", color: "#f1f5f9" }}>${stock.price_usd.toFixed(2)}</div>
+              <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+                <div style={{
+                  width: `${Math.min(100, Math.max(5, 50 + Math.abs(change) * 8))}%`,
+                  height: "100%", borderRadius: 3,
+                  background: isUp ? "linear-gradient(90deg, #00ff88, #00dd77)" : "linear-gradient(90deg, #ff4757, #ff2a40)",
+                  opacity: 0.8,
+                }} />
+              </div>
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
   return (
     <div style={{
       background: "#0a0f1e",
@@ -76,15 +326,32 @@ export default function App() {
         padding: "10px 20px", flexShrink: 0,
         borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ position: "relative", width: 10, height: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: isMobilePortrait ? 1 : "initial", minWidth: 0 }}>
+          <div style={{ position: "relative", width: 10, height: 10, flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#00ff88", animation: "ping 1.5s infinite" }} />
             <div style={{ position: "absolute", inset: 1, borderRadius: "50%", background: "#00ff88" }} />
           </div>
-          <span style={{ color: "#00ff88", fontSize: 10, fontWeight: 600, letterSpacing: 1 }}>LIVE</span>
-          <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, letterSpacing: -0.3 }}>Miami Data Dashboard</h1>
-          <span style={{ fontSize: 11, color: "#64748b" }}>weather · crypto · markets</span>
+          <span style={{ color: "#00ff88", fontSize: 10, fontWeight: 600, letterSpacing: 1, flexShrink: 0 }}>LIVE</span>
+          <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, letterSpacing: -0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>Miami Data Dashboard</h1>
+          {!isMobilePortrait && (
+            <span style={{ fontSize: 11, display: "flex", gap: "6px", alignItems: "center", color: "#64748b" }}>
+              <span>weather</span>
+              <span>·</span>
+              <span>crypto</span>
+              <span>·</span>
+              <span>stocks</span>
+            </span>
+          )}
         </div>
+        {isMobilePortrait && (
+          <span style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0, fontSize: "14px" }}>
+            <span onClick={() => setActiveIndex(0)} style={{ cursor: "pointer", transition: "all 0.2s", opacity: activeIndex === 0 ? 1 : 0.4, textShadow: activeIndex === 0 ? "0 0 8px #3b82f6" : "none" }}>⛅</span>
+            <span style={{ color: "#64748b", fontSize: 10 }}>·</span>
+            <span onClick={() => setActiveIndex(1)} style={{ cursor: "pointer", transition: "all 0.2s", opacity: activeIndex === 1 ? 1 : 0.4, textShadow: activeIndex === 1 ? "0 0 8px #f59e0b" : "none" }}>₿</span>
+            <span style={{ color: "#64748b", fontSize: 10 }}>·</span>
+            <span onClick={() => setActiveIndex(2)} style={{ cursor: "pointer", transition: "all 0.2s", opacity: activeIndex === 2 ? 1 : 0.4, textShadow: activeIndex === 2 ? "0 0 8px #a855f7" : "none" }}>📈</span>
+          </span>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {updated && <span style={{ fontSize: 11, color: "#64748b" }}>{updated}</span>}
           <button onClick={fetchAll} style={{
@@ -103,222 +370,38 @@ export default function App() {
         padding: "12px 20px",
         minHeight: 0,
       }} className="top-section">
-        {/* WEATHER CARD */}
-        <div style={tile({ flex: 1, justifyContent: "space-between" })} className="weather-card">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexShrink: 0 }}>
-            <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: 12 }}>⛅ Weather</span>
-            <span style={{ fontSize: 10, color: "#64748b" }}>Miami, FL</span>
-          </div>
-          {!weather ? (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 8 }}>
-              <Skeleton w="56px" h="56px" br="50%" />
-              <Skeleton w="100px" h="32px" />
-              <Skeleton w="80px" h="12px" />
-            </div>
-          ) : (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-              <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 8 }} className="icon">{wmoIcon(weather.data.weather_code, weather.data.is_day)}</div>
-              <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1, letterSpacing: -1, fontFamily: "monospace" }} className="temperature">{weather.data.temperature_fahrenheit}°</div>
-              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{wmoCondition(weather.data.weather_code)}</div>
-              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Feels like {feelsLike(weather.data.temperature_fahrenheit, weather.data.wind_speed_kmh)}°F</div>
-            </div>
-          )}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8, flexShrink: 0 }}>
-            {!weather ? (
-              <>
-                <Skeleton w="100%" h="10px" mb="4px" />
-                <Skeleton w="100%" h="10px" mb="4px" />
-                <Skeleton w="100%" h="10px" />
-              </>
-            ) : (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 10, color: "#64748b", marginBottom: 4 }}>
-                  <span><span style={{ color: "#ff6b6b" }}>H</span> {wxHL.high != null ? wxHL.high : "—"}°</span>
-                  <span><span style={{ color: "#3b82f6" }}>L</span> {wxHL.low != null ? wxHL.low : "—"}°</span>
-                  <span>☀ {formatTime(weather.data.sunrise) || "6:32 AM"}</span>
-                  <span>🌙 {formatTime(weather.data.sunset) || "7:48 PM"}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 10, color: "#64748b" }} className="details">
-                  <span>💧 {weather.data.relative_humidity ?? weather.data.humidity ?? "—"}%</span>
-                  <span>💨 {weather.data.wind_speed_kmh} km/h</span>
-                </div>
-              </>
-            )}
-          </div>
-          {/* Hourly Forecast Compact */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8, marginTop: 8, flexShrink: 0 }} className="hourly">
-            {!weather?.data?.hourly_forecast ? (
-              <div style={{ display: "flex", gap: 6, justifyContent: "space-around" }}>
-                {[0,1,2,3,4,5].map(i => <Skeleton key={i} w="22px" h="32px" br="4px" />)}
+        {isMobilePortrait ? (
+          /* PORTRAIT MOBILE: Carousel with swipe and dots */
+          <div className="carousel" style={{ position: 'relative', flex: 1, height: '100%', minHeight: 0, overflowX: 'hidden', overflowY: 'scroll' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <div className="carousel-inner" style={{ display: 'flex', width: '300%', height: '100%', transform: `translateX(${-activeIndex * 33.333}%)`, transition: 'transform 0.3s ease', flexShrink: 0 }}>
+              <div style={{ flex: '0 0 calc(100% / 3)', ...tile({ justifyContent: "space-between", boxSizing: 'border-box', overflow: 'auto' }), height: '100%', minHeight: 0, overflowY: 'scroll' }}>
+                {renderWeatherCard()}
               </div>
-            ) : (
-              <div style={{ display: "flex", gap: 6, justifyContent: "space-around" }}>
-                {weather.data.hourly_forecast.slice(0, 6).map((h, i) => (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontSize: 9, minWidth: 0 }}>
-                    <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{i === 0 ? "Now" : formatHour(h.time)}</span>
-                    <span style={{ fontSize: 14 }}>{(h.precipitation_probability || 0) > 30 ? "🌧" : "☀"}</span>
-                    <span style={{ fontFamily: "monospace", fontWeight: 600 }}>{h.temperature_fahrenheit}°</span>
-                  </div>
-                ))}
+              <div style={{ flex: '0 0 calc(100% / 3)', ...tile({ justifyContent: "space-evenly", boxSizing: 'border-box', overflow: 'auto' }), height: '100%', minHeight: 0, overflowY: 'scroll' }}>
+                {renderCryptoCard()}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* CRYPTO CARD */}
-        <div style={tile({ flex: 1, justifyContent: "space-evenly", overflow: "auto" })}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
-            <span style={{ color: "#f59e0b", fontWeight: 700, fontSize: 12 }}>₿ Crypto</span>
-          </div>
-          {cryptoCoins.map(([k, name, sym]) => {
-            const coin = crypto?.data?.prices?.[k];
-            if (!coin) {
-              return (
-                <div key={k} style={{
-                  flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around",
-                  padding: "10px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(248,165,194,0.1)",
-                }}>
-                  <div><Skeleton w="48px" h="48px" br="50%" /></div>
-                  <Skeleton w="100%" h="20px" />
-                  <Skeleton w="100%" h="40px" />
-                </div>
-              );
-            }
-            const isUp = coin.change_24h_percent >= 0;
-            const sparklineData = [30, 65, 45, 72, 55, 80, 50];
-            return (
-              <div key={k} style={{
-                flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around",
-                padding: "12px", borderRadius: 10,
-                background: "rgba(255,255,255,0.02)",
-                border: `2px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
-                boxShadow: `0 0 12px ${isUp ? "rgba(0,255,136,0.1)" : "rgba(255,71,87,0.1)"}, inset 0 0 20px ${isUp ? "rgba(0,255,136,0.05)" : "rgba(255,71,87,0.05)"}`,
-                animation: `glow 2s ease-in-out infinite`,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${isUp ? "#00ff88" : "#ff4757"}, ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"})`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 18, fontWeight: 700, color: "#fff", flexShrink: 0,
-                    boxShadow: `0 0 16px ${isUp ? "rgba(0,255,136,0.4)" : "rgba(255,71,87,0.4)"}`,
-                  }}>{sym[0]}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }}>{sym}</div>
-                    <div style={{ fontSize: 10, color: "#64748b" }}>{name}</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "monospace", color: "#f1f5f9" }}>${coin.price_usd.toLocaleString()}</div>
-                <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 32, justifyContent: "space-between" }}>
-                  {sparklineData.map((h, i) => (
-                    <div key={i} style={{
-                      flex: 1, height: `${(h / 80) * 100}%`,
-                      background: `linear-gradient(180deg, ${isUp ? "#00ff88" : "#ff4757"}, ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"})`,
-                      borderRadius: "2px 2px 0 0",
-                      opacity: 0.7,
-                    }} />
-                  ))}
-                </div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  background: isUp ? "rgba(0,255,136,0.15)" : "rgba(255,71,87,0.15)",
-                  color: isUp ? "#00ff88" : "#ff4757",
-                  padding: "6px 12px", borderRadius: 20,
-                  fontSize: 13, fontWeight: 700, fontFamily: "monospace",
-                  border: `1px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
-                  width: "fit-content", margin: "0 auto",
-                }}>{isUp?"▲":"▼"} {Math.abs(coin.change_24h_percent).toFixed(2)}%</div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* STOCKS CARD */}
-        <div style={tile({ flex: 1, justifyContent: "space-evenly", overflow: "auto" })}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexShrink: 0 }}>
-            <span style={{ color: "#a855f7", fontWeight: 700, fontSize: 12 }}>📈 Stocks</span>
-            {marketClosed && !hasStockData ? (
-              <span style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7", padding: "2px 6px", borderRadius: 4, fontSize: 9, fontWeight: 600 }}>Closed</span>
-            ) : (
-              <span style={{ fontSize: 9, color: "#64748b" }}>{hasStockData ? lastTradingDay() : "—"}</span>
-            )}
-          </div>
-
-          {marketClosed && (
-            <div style={{
-              background: "rgba(168,85,247,0.06)", borderRadius: 6, padding: "6px 8px",
-              display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexShrink: 0, fontSize: 9,
-            }}>
-              <span>🔒</span>
-              <div>
-                <div style={{ fontWeight: 600, color: "#a855f7" }}>Market Closed</div>
-                <div style={{ color: "#64748b", lineHeight: 1.2 }}>Showing {lastTradingDay()}'s data</div>
+              <div style={{ flex: '0 0 calc(100% / 3)', ...tile({ justifyContent: "space-evenly", boxSizing: 'border-box', overflow: 'auto' }), height: '100%', minHeight: 0, overflowY: 'scroll' }}>
+                {renderStocksCard()}
               </div>
             </div>
-          )}
-
-          {!hasStockData ? (
-            <>
-              {["NVDA","AAPL","MSFT","VOO","AMZN"].map(sym => (
-                <div key={sym} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around", padding: "10px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(168,85,247,0.1)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#a855f7" }}>{sym[0]}</div>
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>{sym}</span>
-                  </div>
-                  <Skeleton w="100%" h="20px" />
-                  <Skeleton w="100%" h="8px" />
-                </div>
-              ))}
-            </>
-          ) : (
-            Object.entries(stocks.data.stocks).map(([sym, stock]) => {
-              const change = parseFloat(stock.change_percent);
-              const isUp = change >= 0;
-              return (
-                <div key={sym} style={{
-                  flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around",
-                  padding: "10px", borderRadius: 8,
-                  background: "rgba(255,255,255,0.02)",
-                  borderLeft: `4px solid ${isUp ? "#00ff88" : "#ff4757"}`,
-                  border: `1px solid ${isUp ? "rgba(0,255,136,0.2)" : "rgba(255,71,87,0.2)"}`,
-                  borderLeftWidth: "4px",
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 6,
-                        background: isUp ? "rgba(0,255,136,0.15)" : "rgba(255,71,87,0.15)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 11, fontWeight: 700, color: isUp ? "#00ff88" : "#ff4757",
-                        border: `1px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
-                      }}>{sym[0]}</div>
-                      <span style={{ fontSize: 13, fontWeight: 700 }}>{sym}</span>
-                    </div>
-                    <div style={{
-                      display: "inline-flex", alignItems: "center", justifyContent: "center",
-                      background: isUp ? "rgba(0,255,136,0.15)" : "rgba(255,71,87,0.15)",
-                      color: isUp ? "#00ff88" : "#ff4757",
-                      padding: "4px 10px", borderRadius: 16,
-                      fontSize: 11, fontWeight: 700, fontFamily: "monospace",
-                      border: `1px solid ${isUp ? "rgba(0,255,136,0.3)" : "rgba(255,71,87,0.3)"}`,
-                    }}>{isUp?"▲":"▼"} {Math.abs(change).toFixed(2)}%</div>
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "monospace", color: "#f1f5f9" }}>${stock.price_usd.toFixed(2)}</div>
-                  <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
-                    <div style={{
-                      width: `${Math.min(100, Math.max(5, 50 + Math.abs(change) * 8))}%`,
-                      height: "100%", borderRadius: 3,
-                      background: isUp ? "linear-gradient(90deg, #00ff88, #00dd77)" : "linear-gradient(90deg, #ff4757, #ff2a40)",
-                      opacity: 0.8,
-                    }} />
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+            <div className="dots" style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 10 }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.3)' }} />)}
+            </div>
+          </div>
+        ) : (
+          /* DESKTOP & LANDSCAPE: Show all 3 cards side by side */
+          <>
+            <div className="weather-card" style={tile({ flex: 1, justifyContent: "space-between" })}>
+              {renderWeatherCard()}
+            </div>
+            <div className="crypto-card" style={tile({ flex: 1, justifyContent: "space-evenly", overflow: "auto" })}>
+              {renderCryptoCard()}
+            </div>
+            <div className="stocks-card" style={tile({ flex: 1, justifyContent: "space-evenly", overflow: "auto" })}>
+              {renderStocksCard()}
+            </div>
+          </>
+        )}
       </div>
 
       {/* BOTTOM SECTION: ANALYTICS CARD (40% height) */}
@@ -327,7 +410,7 @@ export default function App() {
         padding: "12px 20px",
         minHeight: 0,
       }} className="bottom-section">
-        <div style={tile({ height: "100%", overflow: "auto" })}>
+        <div style={tile({ height: "100%", overflow: "auto", paddingTop: '12px' })}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexShrink: 0 }}>
             <span style={{ color: "#06b6d4", fontWeight: 700, fontSize: 12 }}>📊 Historical Trends</span>
           </div>
@@ -375,17 +458,12 @@ export default function App() {
           }
         }
         
-        /* MOBILE: below 768px - STACK VERTICALLY */
-        @media (max-width: 768px) {
+        /* MOBILE: below 768px - PORTRAIT ONLY */
+        @media (max-width: 768px) and (orientation: portrait) {
           .top-section {
-            height: 55% !important;
-            flex-direction: column !important;
+            height: 60% !important;
             gap: 10px !important;
             padding: 10px 16px !important;
-          }
-          .top-section > div {
-            flex: 1 !important;
-            min-height: 110px;
           }
           .weather-card .icon {
             font-size: 36px !important;
@@ -398,9 +476,6 @@ export default function App() {
           }
           .weather-card .details {
             font-size: 9px !important;
-          }
-          .weather-card {
-            overflow-y: auto !important;
           }
         }
         
@@ -429,6 +504,7 @@ export default function App() {
           }
           .bottom-section {
             height: 30% !important;
+            padding: 8px 12px !important;
           }
         }
       `}</style>
