@@ -504,9 +504,9 @@ export default function App() {
           ) : (
             /* Landscape: 3-column flex */
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, flex: 1, minHeight: 0 }}>
-              <div style={tile({})}>{renderWeatherCard()}</div>
-              <div style={tile({ overflow: "hidden" })}>{renderCryptoCard()}</div>
-              <div style={tile({ overflow: "auto" })}>{renderStocksCard()}</div>
+              <div style={tile({ overflowY: "auto" })}>{renderWeatherCard()}</div>
+              <div style={tile({ overflowY: "auto" })}>{renderCryptoCard()}</div>
+              <div style={tile({ overflowY: "auto" })}>{renderStocksCard()}</div>
             </div>
           )}
         </main>
