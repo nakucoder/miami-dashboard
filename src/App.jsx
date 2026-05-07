@@ -361,7 +361,7 @@ export default function App() {
               gap: 10,
             }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, overflow: "hidden" }}>
                   <div style={{
                     width: 40, height: 40, borderRadius: "50%",
                     background: stockColors[sym] ?? "#334155",
@@ -382,6 +382,7 @@ export default function App() {
                   padding: "5px 10px", borderRadius: 16,
                   fontSize: 11, fontWeight: 700, fontFamily: monoFont,
                   border: `1px solid ${isUp ? "rgba(0,255,136,0.25)" : "rgba(255,71,87,0.25)"}`,
+                  flexShrink: 0,
                 }}>{isUp ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%</div>
               </div>
               <div style={{ fontSize: 18, fontWeight: 800, fontFamily: monoFont, color: "#f1f5f9" }}>${stock.price_usd.toFixed(2)}</div>
@@ -505,9 +506,9 @@ export default function App() {
             /* Landscape: 3-column, scrollable wrapper so tiles aren't crushed */
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                <div style={tile({ minHeight: 360, overflowY: "auto" })}>{renderWeatherCard()}</div>
-                <div style={tile({ minHeight: 360, overflowY: "auto" })}>{renderCryptoCard()}</div>
-                <div style={tile({ minHeight: 360, overflowY: "auto" })}>{renderStocksCard()}</div>
+                <div style={tile({ minHeight: 360, overflow: "hidden" })}>{renderMobileWeatherCard()}</div>
+                <div style={tile({ minHeight: 360, overflow: "hidden" })}>{renderCryptoCard()}</div>
+                <div style={tile({ minHeight: 360, overflow: "hidden" })}>{renderStocksCard()}</div>
               </div>
             </div>
           )}
