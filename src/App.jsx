@@ -248,7 +248,7 @@ export default function App() {
       <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
         <div style={{ fontSize: 48, lineHeight: 1 }}>₿</div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 6, overflow: "hidden" }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 6 }}>
         {cryptoCoins.map(([k, name, sym]) => {
           const coin = crypto?.data?.prices?.[k];
           if (!coin) {
@@ -502,11 +502,13 @@ export default function App() {
               <div style={{ ...tile({ padding: 24 }), gridColumn: "1 / -1", display: "flex", flexDirection: "column" }}>{renderHistoricalCard()}</div>
             </div>
           ) : (
-            /* Landscape: 3-column flex */
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, flex: 1, minHeight: 0 }}>
-              <div style={tile({ overflowY: "auto" })}>{renderWeatherCard()}</div>
-              <div style={tile({ overflowY: "auto" })}>{renderCryptoCard()}</div>
-              <div style={tile({ overflowY: "auto" })}>{renderStocksCard()}</div>
+            /* Landscape: 3-column, scrollable wrapper so tiles aren't crushed */
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                <div style={tile({ minHeight: 360, overflowY: "auto" })}>{renderWeatherCard()}</div>
+                <div style={tile({ minHeight: 360, overflowY: "auto" })}>{renderCryptoCard()}</div>
+                <div style={tile({ minHeight: 360, overflowY: "auto" })}>{renderStocksCard()}</div>
+              </div>
             </div>
           )}
         </main>
