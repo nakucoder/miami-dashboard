@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  LineChart, Line, BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, LabelList,
+} from "recharts";
 
 const W = "https://miami-dashboard.duckdns.org/weather";
 const C = "https://miami-dashboard.duckdns.org/crypto";
 const S = "https://miami-dashboard.duckdns.org/stocks";
+const WH = "https://miami-dashboard.duckdns.org/weather/history";
+const CH = "https://miami-dashboard.duckdns.org/crypto/history";
+const SH = "https://miami-dashboard.duckdns.org/stocks/history";
 
 export default function App() {
   const [weather, setWeather] = useState(null);
@@ -17,6 +25,10 @@ export default function App() {
     window.innerWidth <= 768 && window.innerHeight > window.innerWidth
   );
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const [weatherHistory, setWeatherHistory] = useState(null);
+  const [cryptoHistory, setCryptoHistory] = useState(null);
+  const [stocksHistory, setStocksHistory] = useState(null);
+  const [historyTab, setHistoryTab] = useState("crypto");
 
   const monoFont = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
@@ -42,6 +54,15 @@ export default function App() {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("orientationchange", handleResize);
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try { const r = await axios.get(WH, { timeout: 10000 }); setWeatherHistory(r.data); } catch { setWeatherHistory(null); }
+      try { const r = await axios.get(CH, { timeout: 10000 }); setCryptoHistory(r.data); } catch { setCryptoHistory(null); }
+      try { const r = await axios.get(SH, { timeout: 10000 }); setStocksHistory(r.data); } catch { setStocksHistory(null); }
+    };
+    fetchHistory();
   }, []);
 
   const feelsLike = (f, kmh) => {
@@ -440,31 +461,185 @@ export default function App() {
   );
 
   // ─── HISTORICAL ───────────────────────────────────────────────────────────
-  const renderHistoricalCard = () => (
-    <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexShrink: 0 }}>
-        <div>
-          <div style={{ color: "#06b6d4", fontWeight: 700, fontSize: 12 }}>📊 Historical Trends</div>
-          <div style={{ color: "#94a3b8", fontSize: 10, marginTop: 4 }}>SaaS metrics and market pulse</div>
+  const renderHistorySection = () => {
+    const smartFmt = (v) =>
+      Math.abs(v) >= 10000 ? `$${(v / 1000).toFixed(0)}k`
+      : Math.abs(v) >= 1000  ? `$${(v / 1000).toFixed(1)}k`
+      :                        `$${v.toFixed(0)}`;
+
+    const fmtXTick = (val) => {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", hour12: true });
+    };
+
+    const gridProps = { stroke: "rgba(255,255,255,0.06)", strokeDasharray: "3 3" };
+    const axisProps = {
+      tick: { fill: "#64748b", fontSize: 10, fontFamily: monoFont },
+      axisLine: { stroke: "rgba(255,255,255,0.1)" },
+      tickLine: false,
+    };
+    const ttProps = {
+      contentStyle: { background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, fontSize: 11 },
+      labelStyle: { color: "#94a3b8" },
+      itemStyle: { color: "#e2e8f0" },
+    };
+    const panelBox = { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "10px 4px 4px", flex: 1 };
+    const empty = (msg) => <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 60 }}>{msg}</div>;
+
+    const renderWeatherTab = () => {
+      if (!weatherHistory) return empty("Loading weather history…");
+      const data = (weatherHistory.data ?? []).filter(d => d.temperature_fahrenheit != null && d.feels_like_fahrenheit != null);
+      return (
+        <div style={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
+              <CartesianGrid {...gridProps} />
+              <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
+              <YAxis {...axisProps} tickFormatter={v => `${v}°`} />
+              <Tooltip {...ttProps} formatter={(v, name) => [`${v}°`, name === "temperature_fahrenheit" ? "Temp" : "Feels Like"]} labelFormatter={fmtXTick} />
+              <Legend formatter={v => v === "temperature_fahrenheit" ? "Temp" : "Feels Like"} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
+              <Line type="monotone" dataKey="temperature_fahrenheit" stroke="#f97316" strokeWidth={2} dot={false} connectNulls />
+              <Line type="monotone" dataKey="feels_like_fahrenheit" stroke="#eab308" strokeWidth={2} dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-        <span style={{ fontFamily: monoFont, color: "#cbd5e1", fontSize: 11 }}>{loading ? "Syncing..." : "Live insights"}</span>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14, flex: 1, minHeight: 0 }}>
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 12, padding: 16, borderRadius: 18, background: "rgba(255,255,255,0.04)" }}>
-            <Skeleton w="55%" h="12px" mb="10px" />
-            <Skeleton w="100%" h="24px" mb="8px" />
-            <Skeleton w="100%" h="10px" mb="4px" />
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flex: 1 }}>
-              {[0, 1, 2, 3, 4].map((j) => (
-                <div key={j} style={{ flex: 1, height: `${24 + j * 14}%`, borderRadius: 6, background: "linear-gradient(180deg, rgba(59,130,246,0.22), rgba(59,130,246,0.05))" }} />
-              ))}
+      );
+    };
+
+    const renderCryptoTab = () => {
+      if (!cryptoHistory) return empty("Loading crypto history…");
+      const raw = cryptoHistory.data ?? [];
+
+      const dualPanel = (k1, k2, c1, c2, l1, l2) => {
+        const data = raw.filter(d => d[k1] != null && d[k2] != null);
+        return (
+          <div style={panelBox}>
+            <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
+              <span style={{ color: c1 }}>{l1}</span><span style={{ color: "#475569" }}> vs </span><span style={{ color: c2 }}>{l2}</span>
+            </div>
+            <div style={{ height: 200 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="time" hide />
+                  <YAxis yAxisId="l" {...axisProps} width={52} tickFormatter={smartFmt} />
+                  <YAxis yAxisId="r" orientation="right" {...axisProps} width={52} tickFormatter={smartFmt} />
+                  <Tooltip {...ttProps} formatter={(v, name) => [`$${v.toLocaleString()}`, name === k1 ? l1 : l2]} labelFormatter={fmtXTick} />
+                  <Line yAxisId="l" type="monotone" dataKey={k1} stroke={c1} strokeWidth={2} dot={false} connectNulls name={k1} />
+                  <Line yAxisId="r" type="monotone" dataKey={k2} stroke={c2} strokeWidth={2} dot={false} connectNulls name={k2} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        ))}
-      </div>
-    </>
-  );
+        );
+      };
+
+      const allData = raw.filter(d => d.bitcoin != null && d.ethereum != null && d.solana != null);
+      const first = allData[0];
+      const normData = first ? allData.map(d => ({
+        time: d.time,
+        BTC: parseFloat(((d.bitcoin  - first.bitcoin)  / first.bitcoin  * 100).toFixed(2)),
+        ETH: parseFloat(((d.ethereum - first.ethereum) / first.ethereum * 100).toFixed(2)),
+        SOL: parseFloat(((d.solana   - first.solana)   / first.solana   * 100).toFixed(2)),
+      })) : [];
+
+      return (
+        <div style={{ display: "flex", gap: 12 }}>
+          {dualPanel("bitcoin", "ethereum", "#f97316", "#3b82f6", "BTC", "ETH")}
+          {dualPanel("bitcoin", "solana",   "#f97316", "#a855f7", "BTC", "SOL")}
+          {dualPanel("solana",  "ethereum", "#a855f7", "#3b82f6", "SOL", "ETH")}
+          <div style={panelBox}>
+            <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
+              % Change from start
+            </div>
+            <div style={{ height: 200 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={normData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="time" hide />
+                  <YAxis {...axisProps} tickFormatter={v => `${v}%`} />
+                  <Tooltip {...ttProps} formatter={(v, name) => [`${v}%`, name]} labelFormatter={fmtXTick} />
+                  <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
+                  <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} connectNulls />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const renderStocksTab = () => {
+      if (!stocksHistory) return empty("Loading stocks history…");
+      const history = stocksHistory.data ?? [];
+      const last = history[history.length - 1];
+      const stocksObj = last?.stocks ?? last ?? {};
+      const barData = Object.entries(stocksObj)
+        .filter(([k]) => k !== "time" && k !== "timestamp")
+        .map(([sym, val]) => {
+          const pct = typeof val === "object" ? parseFloat(val.change_percent) : parseFloat(val);
+          return { sym, change: isNaN(pct) ? null : pct };
+        })
+        .filter(d => d.change != null)
+        .sort((a, b) => b.change - a.change);
+
+      return (
+        <div style={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData} layout="vertical" margin={{ top: 8, right: 70, left: 10, bottom: 0 }}>
+              <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" {...axisProps} tickFormatter={v => `${v}%`} />
+              <YAxis type="category" dataKey="sym" {...axisProps} width={45} />
+              <Tooltip {...ttProps} formatter={v => [`${v.toFixed(2)}%`, "Change"]} />
+              <Bar dataKey="change" radius={[0, 4, 4, 0]}>
+                {barData.map((entry, i) => (
+                  <Cell key={i} fill={entry.change >= 0 ? "#00ff88" : "#ff4757"} />
+                ))}
+                <LabelList
+                  dataKey="change"
+                  position="right"
+                  formatter={v => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`}
+                  style={{ fill: "#94a3b8", fontSize: 11, fontFamily: monoFont }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    };
+
+    return (
+      <>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 16, flexShrink: 0 }}>
+          <div>
+            <div style={{ color: "#06b6d4", fontWeight: 700, fontSize: 12 }}>📊 Historical Trends</div>
+            <div style={{ color: "#94a3b8", fontSize: 10, marginTop: 4 }}>SaaS metrics and market pulse</div>
+          </div>
+          <div style={{ display: "flex", gap: 20 }}>
+            {["weather", "crypto", "stocks"].map(tab => (
+              <span key={tab} onClick={() => setHistoryTab(tab)} style={{
+                fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "capitalize",
+                letterSpacing: 0.3, fontFamily: monoFont,
+                color: historyTab === tab ? "#fff" : "rgba(255,255,255,0.25)",
+                paddingBottom: 2,
+                borderBottom: historyTab === tab ? "2px solid #00ff88" : "2px solid transparent",
+                transition: "color 0.2s ease",
+              }}>{tab}</span>
+            ))}
+          </div>
+          <span style={{ fontFamily: monoFont, color: "#cbd5e1", fontSize: 11 }}>{loading ? "Syncing..." : "Live insights"}</span>
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          {historyTab === "weather" && renderWeatherTab()}
+          {historyTab === "crypto" && renderCryptoTab()}
+          {historyTab === "stocks" && renderStocksTab()}
+        </div>
+      </>
+    );
+  };
 
   return (
     <div style={{ background: "#050b1a", color: "#e2e8f0", minHeight: "100vh", overflowX: "hidden", fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
@@ -538,7 +713,7 @@ export default function App() {
               <div style={tile({})}>{renderWeatherCard()}</div>
               <div style={tile({ overflow: "hidden" })}>{renderCryptoCard()}</div>
               <div style={tile({ overflow: "auto" })}>{renderStocksCard()}</div>
-              <div style={{ ...tile({ padding: 24 }), gridColumn: "1 / -1", display: "flex", flexDirection: "column" }}>{renderHistoricalCard()}</div>
+              <div style={{ ...tile({ padding: 24 }), gridColumn: "1 / -1", display: "flex", flexDirection: "column" }}>{renderHistorySection()}</div>
             </div>
           ) : (
             /* Landscape: 3-column, scrollable wrapper so tiles aren't crushed */
