@@ -491,19 +491,24 @@ export default function App() {
       if (!weatherHistory) return empty("Loading weather history…");
       const data = (weatherHistory.data ?? []).filter(d => d.temperature_fahrenheit != null && d.feels_like_fahrenheit != null);
       return (
-        <div style={{ height: 320 }}>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
-              <CartesianGrid {...gridProps} />
-              <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
-              <YAxis {...axisProps} tickFormatter={v => `${v}°`} />
-              <Tooltip {...ttProps} formatter={(v, name) => [`${v}°`, name === "temperature_fahrenheit" ? "Temp" : "Feels Like"]} labelFormatter={fmtXTick} />
-              <Legend formatter={v => v === "temperature_fahrenheit" ? "Temp" : "Feels Like"} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
-              <Line type="monotone" dataKey="temperature_fahrenheit" stroke="#f97316" strokeWidth={2} dot={false} connectNulls />
-              <Line type="monotone" dataKey="feels_like_fahrenheit" stroke="#eab308" strokeWidth={2} dot={false} connectNulls />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <>
+          <div style={{ fontSize: 10, color: "#f97316", fontFamily: monoFont, marginBottom: 6, wordBreak: "break-all" }}>
+            Weather data points: {weatherHistory?.data?.length} | First: {JSON.stringify(weatherHistory?.data?.[0])}
+          </div>
+          <div style={{ height: 320 }}>
+            <ResponsiveContainer width="100%" height={320}>
+              <LineChart data={data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
+                <CartesianGrid {...gridProps} />
+                <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
+                <YAxis {...axisProps} tickFormatter={v => `${v}°`} />
+                <Tooltip {...ttProps} formatter={(v, name) => [`${v}°`, name === "temperature_fahrenheit" ? "Temp" : "Feels Like"]} labelFormatter={fmtXTick} />
+                <Legend formatter={v => v === "temperature_fahrenheit" ? "Temp" : "Feels Like"} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
+                <Line type="monotone" dataKey="temperature_fahrenheit" stroke="#f97316" strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="feels_like_fahrenheit" stroke="#eab308" strokeWidth={2} dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
       );
     };
 
@@ -545,7 +550,11 @@ export default function App() {
       })) : [];
 
       return (
-        <div style={{ display: "flex", gap: 12 }}>
+        <>
+          <div style={{ fontSize: 10, color: "#f97316", fontFamily: monoFont, marginBottom: 6, wordBreak: "break-all" }}>
+            Crypto data points: {cryptoHistory?.data?.length} | First: {JSON.stringify(cryptoHistory?.data?.[0])}
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
           {dualPanel("bitcoin", "ethereum", "#f97316", "#3b82f6", "BTC", "ETH")}
           {dualPanel("bitcoin", "solana",   "#f97316", "#a855f7", "BTC", "SOL")}
           {dualPanel("solana",  "ethereum", "#a855f7", "#3b82f6", "SOL", "ETH")}
@@ -569,6 +578,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        </>
       );
     };
 
@@ -587,7 +597,11 @@ export default function App() {
         .sort((a, b) => b.change - a.change);
 
       return (
-        <div style={{ height: 320 }}>
+        <>
+          <div style={{ fontSize: 10, color: "#f97316", fontFamily: monoFont, marginBottom: 6, wordBreak: "break-all" }}>
+            Stocks data points: {stocksHistory?.data?.length}
+          </div>
+          <div style={{ height: 320 }}>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={barData} layout="vertical" margin={{ top: 8, right: 70, left: 10, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={false} />
@@ -607,7 +621,8 @@ export default function App() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </div>
+          </div>
+        </>
       );
     };
 
