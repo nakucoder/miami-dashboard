@@ -134,41 +134,79 @@ export default function App() {
       setActiveIndex((prev) => (diff > 0 ? (prev + 1) % 3 : (prev - 1 + 3) % 3));
   };
 
-  // ─── WEATHER — desktop / landscape ────────────────────────────────────────
-  const renderWeatherCard = () => (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 20 }}>
-        {!weather ? (
-          <>
-            <Skeleton w="56px" h="56px" br="50%" />
-            <Skeleton w="100px" h="44px" br="8px" />
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: 68, lineHeight: 1, flexShrink: 0 }}>{wmoIcon(weather.data.weather_code, weather.data.is_day)}</div>
-            <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, letterSpacing: -2, fontFamily: monoFont }}>{weather.data.temperature_fahrenheit}°</div>
-          </>
-        )}
-      </div>
-      <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 15 }}>
-        {!weather?.data?.hourly_forecast ? (
-          <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
+  // ─── WEATHER — desktop ────────────────────────────────────────────────────
+  const renderWeatherCard = () => {
+    if (!weather) {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+          <Skeleton w="90px" h="11px" br="4px" />
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+            <Skeleton w="52px" h="52px" br="50%" />
+            <Skeleton w="80px" h="44px" br="8px" />
+          </div>
+          <Skeleton w="70px" h="11px" br="4px" />
+          <Skeleton w="100%" h="11px" br="4px" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <Skeleton w="100%" h="28px" br="8px" />
+            <Skeleton w="100%" h="28px" br="8px" />
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12, display: "flex", gap: 8, justifyContent: "space-around" }}>
             {[0, 1, 2, 3, 4, 5].map(i => <Skeleton key={i} w="22px" h="36px" br="4px" />)}
           </div>
-        ) : (
-          <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
-            {weather.data.hourly_forecast.slice(0, 6).map((h, i) => (
-              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, minWidth: 0 }}>
-                <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{i === 0 ? "Now" : formatHour(h.time)}</span>
-                <span style={{ fontSize: 14 }}>{(h.precipitation_probability || 0) > 30 ? "🌧" : "☀"}</span>
-                <span style={{ fontFamily: monoFont, fontWeight: 600 }}>{h.temperature_fahrenheit}°</span>
-              </div>
-            ))}
+        </div>
+      );
+    }
+
+    const windKmh = weather.data.wind_speed_kmh;
+    const fl = weather.data.feels_like_fahrenheit ?? feelsLike(weather.data.temperature_fahrenheit, windKmh);
+    const humidity = weather.data.hourly_forecast?.[0]?.humidity;
+    const windMph = windKmh != null ? Math.round(windKmh * 0.621371) : null;
+    const high = weather.data.high_fahrenheit ?? wxHL.high;
+    const low = weather.data.low_fahrenheit ?? wxHL.low;
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+        <div style={{ flexShrink: 0, textAlign: "center", fontSize: 11, fontWeight: 600, letterSpacing: 1, color: "#94a3b8", textTransform: "uppercase" }}>
+          {weather.data.condition ?? wmoCondition(weather.data.weather_code)}
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 }}>
+          <div style={{ fontSize: 54, lineHeight: 1, flexShrink: 0 }}>{wmoIcon(weather.data.weather_code, weather.data.is_day)}</div>
+          <div style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -2, fontFamily: monoFont }}>{weather.data.temperature_fahrenheit}°</div>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: "center", fontSize: 11, color: "#64748b" }}>Feels like {fl}°</div>
+        <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 12, fontSize: 10, color: "#94a3b8" }}>
+          {high != null && <span>H: {high}°&nbsp;&nbsp;L: {low}°</span>}
+          {weather.data.sunrise && <span>🌅 {formatTime(weather.data.sunrise)}</span>}
+          {weather.data.sunset && <span>🌇 {formatTime(weather.data.sunset)}</span>}
+        </div>
+        <div style={{ flexShrink: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          <div style={{ textAlign: "center", fontSize: 10, color: "#94a3b8", background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "6px 4px" }}>
+            💧 {humidity != null ? `${humidity}%` : "—"}
           </div>
-        )}
+          <div style={{ textAlign: "center", fontSize: 10, color: "#94a3b8", background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "6px 4px" }}>
+            💨 {windMph != null ? `${windMph} mph` : "—"}
+          </div>
+        </div>
+        <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
+          {!weather.data.hourly_forecast ? (
+            <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
+              {[0, 1, 2, 3, 4, 5].map(i => <Skeleton key={i} w="22px" h="36px" br="4px" />)}
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
+              {weather.data.hourly_forecast.slice(0, 6).map((h, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, minWidth: 0 }}>
+                  <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{i === 0 ? "Now" : formatHour(h.time)}</span>
+                  <span style={{ fontSize: 14 }}>{(h.precipitation_probability || 0) > 30 ? "🌧" : "☀"}</span>
+                  <span style={{ fontFamily: monoFont, fontWeight: 600 }}>{h.temperature_fahrenheit}°</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ─── WEATHER — portrait mobile (full detail, compact sizes) ───────────────
   const renderMobileWeatherCard = () => {
