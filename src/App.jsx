@@ -484,14 +484,14 @@ export default function App() {
       labelStyle: { color: "#94a3b8" },
       itemStyle: { color: "#e2e8f0" },
     };
-    const panelBox = { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "10px 4px 4px", flex: 1 };
+    const panelBox = { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "10px 4px 4px", flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column" };
     const empty = (msg) => <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 60 }}>{msg}</div>;
 
     const renderWeatherTab = () => {
       if (!weatherHistory) return empty("Loading weather history…");
       const data = (weatherHistory.data ?? []).filter(d => d.temperature_fahrenheit != null && d.feels_like_fahrenheit != null);
       return (
-        <div style={{ height: 260 }}>
+        <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
               <CartesianGrid {...gridProps} />
@@ -518,7 +518,7 @@ export default function App() {
             <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
               <span style={{ color: c1 }}>{l1}</span><span style={{ color: "#475569" }}> vs </span><span style={{ color: c2 }}>{l2}</span>
             </div>
-            <div style={{ height: 200 }}>
+            <div style={{ flex: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...gridProps} />
@@ -545,7 +545,7 @@ export default function App() {
       })) : [];
 
       return (
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 12, flex: 1, minHeight: 0, height: "100%" }}>
           {dualPanel("bitcoin", "ethereum", "#f97316", "#3b82f6", "BTC", "ETH")}
           {dualPanel("bitcoin", "solana",   "#f97316", "#a855f7", "BTC", "SOL")}
           {dualPanel("solana",  "ethereum", "#a855f7", "#3b82f6", "SOL", "ETH")}
@@ -553,7 +553,7 @@ export default function App() {
             <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
               % Change from start
             </div>
-            <div style={{ height: 200 }}>
+            <div style={{ flex: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={normData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...gridProps} />
@@ -587,7 +587,7 @@ export default function App() {
         .sort((a, b) => b.change - a.change);
 
       return (
-        <div style={{ height: 260 }}>
+        <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={barData} layout="vertical" margin={{ top: 8, right: 70, left: 10, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={false} />
@@ -621,7 +621,7 @@ export default function App() {
           <div style={{ display: "flex", gap: 20 }}>
             {["weather", "crypto", "stocks"].map(tab => (
               <span key={tab} onClick={() => setHistoryTab(tab)} style={{
-                fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "capitalize",
+                fontSize: 11, fontWeight: 700, cursor: "pointer",
                 letterSpacing: 0.3, fontFamily: monoFont,
                 color: historyTab === tab ? "#fff" : "rgba(255,255,255,0.25)",
                 paddingBottom: 2,
@@ -632,7 +632,7 @@ export default function App() {
           </div>
           <span style={{ fontFamily: monoFont, color: "#cbd5e1", fontSize: 11 }}>{loading ? "Syncing..." : "Live insights"}</span>
         </div>
-        <div style={{ flex: 1, minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
           {historyTab === "weather" && renderWeatherTab()}
           {historyTab === "crypto" && renderCryptoTab()}
           {historyTab === "stocks" && renderStocksTab()}
@@ -713,7 +713,7 @@ export default function App() {
               <div style={tile({})}>{renderWeatherCard()}</div>
               <div style={tile({ overflow: "hidden" })}>{renderCryptoCard()}</div>
               <div style={tile({ overflow: "auto" })}>{renderStocksCard()}</div>
-              <div style={{ ...tile({ padding: 24 }), gridColumn: "1 / -1", display: "flex", flexDirection: "column" }}>{renderHistorySection()}</div>
+              <div style={{ ...tile({ padding: 24, height: 400 }), gridColumn: "1 / -1", display: "flex", flexDirection: "column" }}>{renderHistorySection()}</div>
             </div>
           ) : (
             /* Landscape: 3-column, scrollable wrapper so tiles aren't crushed */
