@@ -496,10 +496,10 @@ export default function App() {
                 <CartesianGrid {...gridProps} />
                 <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
                 <YAxis {...axisProps} tickFormatter={v => `${v}°`} />
-                <Tooltip {...ttProps} formatter={(v, name) => [`${v}°`, name === "temperature_fahrenheit" ? "Temp" : "Feels Like"]} labelFormatter={fmtXTick} />
-                <Legend formatter={v => v === "temperature_fahrenheit" ? "Temp" : "Feels Like"} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
-                <Line type="monotone" dataKey="temperature_fahrenheit" stroke="#f97316" strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="feels_like_fahrenheit" stroke="#eab308" strokeWidth={2} dot={false} connectNulls />
+                <Tooltip {...ttProps} formatter={(v, name) => [`${v}°`, name === "temp" ? "Temp" : "Feels Like"]} labelFormatter={fmtXTick} />
+                <Legend formatter={v => v === "temp" ? "Temp" : "Feels Like"} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
+                <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                <Line type="monotone" dataKey="feels_like" stroke="#eab308" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
         </div>
@@ -524,8 +524,8 @@ export default function App() {
                   <YAxis yAxisId="l" {...axisProps} width={52} tickFormatter={smartFmt} />
                   <YAxis yAxisId="r" orientation="right" {...axisProps} width={52} tickFormatter={smartFmt} />
                   <Tooltip {...ttProps} formatter={(v, name) => [`$${v.toLocaleString()}`, name === k1 ? l1 : l2]} labelFormatter={fmtXTick} />
-                  <Line yAxisId="l" type="monotone" dataKey={k1} stroke={c1} strokeWidth={2} dot={false} connectNulls name={k1} />
-                  <Line yAxisId="r" type="monotone" dataKey={k2} stroke={c2} strokeWidth={2} dot={false} connectNulls name={k2} />
+                  <Line yAxisId="l" type="monotone" dataKey={k1} stroke={c1} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls name={k1} />
+                  <Line yAxisId="r" type="monotone" dataKey={k2} stroke={c2} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls name={k2} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -537,16 +537,16 @@ export default function App() {
       const first = allData[0];
       const normData = first ? allData.map(d => ({
         time: d.time,
-        BTC: parseFloat(((d.bitcoin  - first.bitcoin)  / first.bitcoin  * 100).toFixed(2)),
-        ETH: parseFloat(((d.ethereum - first.ethereum) / first.ethereum * 100).toFixed(2)),
-        SOL: parseFloat(((d.solana   - first.solana)   / first.solana   * 100).toFixed(2)),
+        BTC: parseFloat(((d.btc - first.btc) / first.btc * 100).toFixed(2)),
+        ETH: parseFloat(((d.eth - first.eth) / first.eth * 100).toFixed(2)),
+        SOL: parseFloat(((d.sol - first.sol) / first.sol * 100).toFixed(2)),
       })) : [];
 
       return (
         <div style={{ display: "flex", gap: 12 }}>
-          {dualPanel("bitcoin", "ethereum", "#f97316", "#3b82f6", "BTC", "ETH")}
-          {dualPanel("bitcoin", "solana",   "#f97316", "#a855f7", "BTC", "SOL")}
-          {dualPanel("solana",  "ethereum", "#a855f7", "#3b82f6", "SOL", "ETH")}
+          {dualPanel("btc", "eth", "#f97316", "#3b82f6", "BTC", "ETH")}
+          {dualPanel("btc", "sol", "#f97316", "#a855f7", "BTC", "SOL")}
+          {dualPanel("sol", "eth", "#a855f7", "#3b82f6", "SOL", "ETH")}
           <div style={panelBox}>
             <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
               % Change from start
@@ -559,9 +559,9 @@ export default function App() {
                   <YAxis {...axisProps} tickFormatter={v => `${v}%`} />
                   <Tooltip {...ttProps} formatter={(v, name) => [`${v}%`, name]} labelFormatter={fmtXTick} />
                   <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
-                  <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             </div>
