@@ -489,15 +489,10 @@ export default function App() {
 
     const renderWeatherTab = () => {
       if (!weatherHistory) return empty("Loading weather history…");
-      const data = (weatherHistory.data ?? []).filter(d => d.temperature_fahrenheit != null && d.feels_like_fahrenheit != null);
       return (
-        <>
-          <div style={{ fontSize: 10, color: "#f97316", fontFamily: monoFont, marginBottom: 6, wordBreak: "break-all" }}>
-            Weather data points: {weatherHistory?.data?.length} | First: {JSON.stringify(weatherHistory?.data?.[0])}
-          </div>
-          <div style={{ height: 320 }}>
+        <div style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
+              <LineChart data={weatherHistory?.data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
                 <YAxis {...axisProps} tickFormatter={v => `${v}°`} />
@@ -507,17 +502,15 @@ export default function App() {
                 <Line type="monotone" dataKey="feels_like_fahrenheit" stroke="#eab308" strokeWidth={2} dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-        </>
+        </div>
       );
     };
 
     const renderCryptoTab = () => {
       if (!cryptoHistory) return empty("Loading crypto history…");
-      const raw = cryptoHistory.data ?? [];
 
       const dualPanel = (k1, k2, c1, c2, l1, l2) => {
-        const data = raw.filter(d => d[k1] != null && d[k2] != null);
+        const data = cryptoHistory?.data ?? [];
         return (
           <div style={panelBox}>
             <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
@@ -540,7 +533,7 @@ export default function App() {
         );
       };
 
-      const allData = raw.filter(d => d.bitcoin != null && d.ethereum != null && d.solana != null);
+      const allData = cryptoHistory?.data ?? [];
       const first = allData[0];
       const normData = first ? allData.map(d => ({
         time: d.time,
@@ -550,11 +543,7 @@ export default function App() {
       })) : [];
 
       return (
-        <>
-          <div style={{ fontSize: 10, color: "#f97316", fontFamily: monoFont, marginBottom: 6, wordBreak: "break-all" }}>
-            Crypto data points: {cryptoHistory?.data?.length} | First: {JSON.stringify(cryptoHistory?.data?.[0])}
-          </div>
-          <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 12 }}>
           {dualPanel("bitcoin", "ethereum", "#f97316", "#3b82f6", "BTC", "ETH")}
           {dualPanel("bitcoin", "solana",   "#f97316", "#a855f7", "BTC", "SOL")}
           {dualPanel("solana",  "ethereum", "#a855f7", "#3b82f6", "SOL", "ETH")}
@@ -578,7 +567,6 @@ export default function App() {
             </div>
           </div>
         </div>
-        </>
       );
     };
 
@@ -597,11 +585,7 @@ export default function App() {
         .sort((a, b) => b.change - a.change);
 
       return (
-        <>
-          <div style={{ fontSize: 10, color: "#f97316", fontFamily: monoFont, marginBottom: 6, wordBreak: "break-all" }}>
-            Stocks data points: {stocksHistory?.data?.length}
-          </div>
-          <div style={{ height: 320 }}>
+        <div style={{ height: 320 }}>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={barData} layout="vertical" margin={{ top: 8, right: 70, left: 10, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={false} />
@@ -621,8 +605,7 @@ export default function App() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          </div>
-        </>
+        </div>
       );
     };
 
