@@ -179,7 +179,7 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <div style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+              <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <YAxis domain={[40, 'auto']} tickFormatter={v => `${v}°`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={28} tickLine={false} axisLine={false} />
                 <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
                 <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
@@ -209,7 +209,7 @@ export default function App() {
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={normData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+            <LineChart data={normData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={32} tickLine={false} axisLine={false} />
               <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
               <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
