@@ -29,6 +29,7 @@ export default function App() {
   const [cryptoHistory, setCryptoHistory] = useState(null);
   const [stocksHistory, setStocksHistory] = useState(null);
   const [historyTab, setHistoryTab] = useState("crypto");
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const monoFont = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
@@ -151,8 +152,115 @@ export default function App() {
   const handleTouchStart = (e) => setTouchStartX(e.touches[0].clientX);
   const handleTouchEnd = (e) => {
     const diff = touchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50)
+    if (Math.abs(diff) > 50) {
       setActiveIndex((prev) => (diff > 0 ? (prev + 1) % 3 : (prev - 1 + 3) % 3));
+      setIsFlipped(false);
+    }
+  };
+
+  // ─── MOBILE FLIP BACK FACES ───────────────────────────────────────────────
+  const mobileBackNav = (active) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#334155" }}>
+      <span style={{ color: active === "weather" ? "#e2e8f0" : undefined, fontWeight: active === "weather" ? 700 : undefined }}>weather</span>
+      <span>·</span>
+      <span style={{ color: active === "crypto" ? "#e2e8f0" : undefined, fontWeight: active === "crypto" ? 700 : undefined }}>crypto</span>
+      <span>·</span>
+      <span style={{ color: active === "stocks" ? "#e2e8f0" : undefined, fontWeight: active === "stocks" ? 700 : undefined }}>stocks</span>
+    </div>
+  );
+
+  const renderMobileWeatherBack = () => {
+    const data = (weatherHistory?.data ?? []).filter(d => d.temp != null);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
+        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>temperature history</span>
+          {mobileBackNav("weather")}
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+              <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
+              <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+              <Line type="monotone" dataKey="feels_like" stroke="#eab308" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: "center", fontSize: 9, color: "#334155", marginTop: 6, fontFamily: monoFont }}>tap to flip back</div>
+      </div>
+    );
+  };
+
+  const renderMobileCryptoBack = () => {
+    const raw = (cryptoHistory?.data ?? []).filter(d => d.btc != null && d.eth != null && d.sol != null);
+    const first = raw[0];
+    const normData = first ? raw.map(d => ({
+      time: d.time,
+      BTC: parseFloat(((d.btc - first.btc) / first.btc * 100).toFixed(2)),
+      ETH: parseFloat(((d.eth - first.eth) / first.eth * 100).toFixed(2)),
+      SOL: parseFloat(((d.sol - first.sol) / first.sol * 100).toFixed(2)),
+    })) : [];
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
+        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>% change from start</span>
+          {mobileBackNav("crypto")}
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={normData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+              <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
+              <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+              <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+              <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: "center", fontSize: 9, color: "#334155", marginTop: 6, fontFamily: monoFont }}>tap to flip back</div>
+      </div>
+    );
+  };
+
+  const renderMobileStocksBack = () => {
+    const history = stocksHistory?.data ?? [];
+    const last = history[history.length - 1];
+    const stocksObj = last?.stocks ?? last ?? {};
+    const barData = Object.entries(stocksObj)
+      .filter(([k]) => k !== "time" && k !== "timestamp")
+      .map(([sym, val]) => {
+        const pct = typeof val === "object" ? parseFloat(val.change_percent) : parseFloat(val);
+        return { sym, change: isNaN(pct) ? null : pct };
+      })
+      .filter(d => d.change != null)
+      .sort((a, b) => b.change - a.change);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
+        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>daily % change</span>
+          {mobileBackNav("stocks")}
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 44, left: 10, bottom: 0 }}>
+              <XAxis type="number" hide domain={[dataMin => Math.min(dataMin, -0.1), dataMax => Math.max(dataMax, 0.1)]} />
+              <YAxis type="category" dataKey="sym" tick={{ fill: "#64748b", fontSize: 10, fontFamily: monoFont }} axisLine={false} tickLine={false} width={36} />
+              <Bar dataKey="change" radius={[0, 3, 3, 0]}>
+                {barData.map((entry, i) => (
+                  <Cell key={i} fill={entry.change >= 0 ? "#00c853" : "#ff5252"} />
+                ))}
+                <LabelList
+                  dataKey="change"
+                  position="right"
+                  formatter={v => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`}
+                  style={{ fill: "#94a3b8", fontSize: 10, fontFamily: monoFont }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: "center", fontSize: 9, color: "#334155", marginTop: 6, fontFamily: monoFont }}>tap to flip back</div>
+      </div>
+    );
   };
 
   // ─── WEATHER — desktop ────────────────────────────────────────────────────
@@ -694,10 +802,40 @@ export default function App() {
           {isMobilePortrait ? (
             /* Portrait mobile: single-card carousel */
             <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", background: "rgba(15, 23, 42, 0.7)", backdropFilter: "blur(12px)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)", padding: 20 }}>
-                {activeIndex === 0 && renderMobileWeatherCard()}
-                {activeIndex === 1 && renderCryptoCard()}
-                {activeIndex === 2 && renderStocksCard()}
+              {/* Flip card */}
+              <div style={{ flex: 1, minHeight: 0, perspective: 1200 }} onClick={() => setIsFlipped(f => !f)}>
+                <div style={{
+                  position: "relative", width: "100%", height: "100%",
+                  transformStyle: "preserve-3d",
+                  transition: "transform 0.6s",
+                  transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}>
+                  {/* Front face */}
+                  <div style={{
+                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                    backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                    display: "flex", flexDirection: "column", overflow: "hidden",
+                    background: "rgba(15, 23, 42, 0.7)", backdropFilter: "blur(12px)",
+                    borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)", padding: 20,
+                  }}>
+                    {activeIndex === 0 && renderMobileWeatherCard()}
+                    {activeIndex === 1 && renderCryptoCard()}
+                    {activeIndex === 2 && renderStocksCard()}
+                  </div>
+                  {/* Back face */}
+                  <div style={{
+                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                    backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                    display: "flex", flexDirection: "column", overflow: "hidden",
+                    background: "rgba(15, 23, 42, 0.7)", backdropFilter: "blur(12px)",
+                    borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)", padding: 20,
+                  }}>
+                    {activeIndex === 0 && renderMobileWeatherBack()}
+                    {activeIndex === 1 && renderMobileCryptoBack()}
+                    {activeIndex === 2 && renderMobileStocksBack()}
+                  </div>
+                </div>
               </div>
               <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", gap: 10, padding: "14px 0" }}>
                 {[0, 1, 2].map((i) => (
