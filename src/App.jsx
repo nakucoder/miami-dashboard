@@ -176,9 +176,9 @@ export default function App() {
         <div style={{ flexShrink: 0, marginBottom: 10 }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>temperature history</span>
         </div>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
+        <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ height: 280, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={280}>
               <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <YAxis domain={[40, 'auto']} tickFormatter={v => `${v}°`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={28} tickLine={false} axisLine={false} />
                 <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
@@ -207,16 +207,18 @@ export default function App() {
         <div style={{ flexShrink: 0, marginBottom: 10 }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>% change from start</span>
         </div>
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={normData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={32} tickLine={false} axisLine={false} />
-              <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
-              <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
-              <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
-              <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
-            </LineChart>
-          </ResponsiveContainer>
+        <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ height: 280, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={normData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={32} tickLine={false} axisLine={false} />
+                <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
+                <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         <div style={{ flexShrink: 0, textAlign: "center", fontSize: 9, color: "#334155", marginTop: 6, fontFamily: monoFont }}>tap to flip back</div>
       </div>
