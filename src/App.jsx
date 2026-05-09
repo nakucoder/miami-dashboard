@@ -365,7 +365,7 @@ export default function App() {
 
     const windKmh = weather.data.wind_speed_kmh;
     const fl = feelsLike(weather.data.temperature_fahrenheit, windKmh);
-    const humidity = weather.data.humidity;
+    const humidity = weather.data.hourly_forecast?.[0]?.humidity;
     const windMph = windKmh != null ? Math.round(windKmh / 1.60934) : null;
 
     return (
