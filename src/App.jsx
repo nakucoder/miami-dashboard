@@ -770,7 +770,7 @@ export default function App() {
 
           {/* Subtitle */}
           <p style={{ margin: 0, fontSize: 14, color: "#64748b", lineHeight: 1.6, maxWidth: 440 }}>
-            A live data engineering project pulling real-time weather, crypto, and stock market data into AWS S3 every hour.
+            An automated data system that captures live Miami weather, cryptocurrency prices, and stock market data — self-updating and visualized in real time.
           </p>
 
           {/* Tech stack badges */}
