@@ -30,6 +30,7 @@ export default function App() {
   const [stocksHistory, setStocksHistory] = useState(null);
   const [historyTab, setHistoryTab] = useState("crypto");
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   const monoFont = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
@@ -749,6 +750,79 @@ export default function App() {
       </>
     );
   };
+
+  if (!showDashboard) {
+    return (
+      <div style={{ background: "#050b1a", color: "#e2e8f0", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", padding: 24, boxSizing: "border-box" }}>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: 560, width: "100%", textAlign: "center" }}>
+          {/* LIVE badge */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="pulse-dot" />
+            <span style={{ color: "#00ff88", fontSize: 11, letterSpacing: 1.5, fontWeight: 700, fontFamily: monoFont }}>LIVE</span>
+          </div>
+
+          {/* Title */}
+          <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.15 }}>Miami Data Dashboard</h1>
+
+          {/* Subtitle */}
+          <p style={{ margin: 0, fontSize: 14, color: "#64748b", lineHeight: 1.6, maxWidth: 440 }}>
+            A live data engineering project pulling real-time weather, crypto, and stock market data into AWS S3 every hour.
+          </p>
+
+          {/* Tech stack badges */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+            {["FastAPI", "Docker", "AWS S3", "React", "Recharts"].map(tech => (
+              <span key={tech} style={{
+                fontFamily: monoFont,
+                fontSize: 11,
+                color: "#94a3b8",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8,
+                padding: "4px 12px",
+              }}>{tech}</span>
+            ))}
+          </div>
+
+          <div style={{ height: 12 }} />
+
+          {/* Enter button */}
+          <button
+            onClick={() => setShowDashboard(true)}
+            className="refresh-button"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              color: "#e2e8f0",
+              padding: "12px 28px",
+              borderRadius: 14,
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 700,
+              transition: "transform 0.15s ease, background 0.2s ease",
+              boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
+            }}
+          >
+            Enter Dashboard →
+          </button>
+
+          {/* Credit */}
+          <span style={{ fontSize: 11, color: "#334155", fontFamily: monoFont }}>Built by Juan Spinelli</span>
+        </div>
+
+        <style>{`
+          body { background: #050b1a; color: #e2e8f0; min-height: 100vh; }
+          .pulse-dot { width: 10px; height: 10px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 18px rgba(0,255,136,0.35); animation: pulse 1.6s ease-in-out infinite; }
+          .refresh-button:active { transform: scale(0.96); }
+          @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.65; } }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: "#050b1a", color: "#e2e8f0", minHeight: "100vh", overflowX: "hidden", fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
