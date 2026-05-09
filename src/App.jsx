@@ -838,7 +838,7 @@ export default function App() {
             <div className="pulse-dot" />
             <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
               <span style={{ color: "#00ff88", fontSize: 10, letterSpacing: 1.5, fontWeight: 700 }}>LIVE</span>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: -0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Miami Data Dashboard</h1>
+              <h1 onClick={() => setShowDashboard(false)} style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: -0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}>Miami Data Dashboard</h1>
             </div>
           </div>
 
