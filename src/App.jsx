@@ -803,16 +803,16 @@ export default function App() {
             /* Portrait mobile: single-card carousel */
             <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
               {/* Flip card */}
-              <div style={{ flex: 1, minHeight: 0, perspective: 1200 }} onClick={() => setIsFlipped(f => !f)}>
+              <div style={{ flex: 1, minHeight: 0, perspective: 1200, display: "flex", flexDirection: "column" }} onClick={() => setIsFlipped(f => !f)}>
                 <div style={{
-                  position: "relative", width: "100%", height: "100%",
+                  position: "relative", width: "100%", flex: 1,
                   transformStyle: "preserve-3d",
                   transition: "transform 0.6s",
                   transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
                 }}>
                   {/* Front face */}
                   <div style={{
-                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                    position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
                     backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
                     display: "flex", flexDirection: "column", overflow: "hidden",
                     background: "rgba(15, 23, 42, 0.7)", backdropFilter: "blur(12px)",
