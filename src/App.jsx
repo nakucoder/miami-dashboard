@@ -775,7 +775,7 @@ export default function App() {
 
           {/* Tech stack badges */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-            {["FastAPI", "Docker", "AWS S3", "React", "Recharts"].map(tech => (
+            {["FastAPI", "APScheduler", "Docker", "AWS EC2", "AWS S3", "React", "Recharts", "Nginx", "GitHub Actions", "Vercel"].map(tech => (
               <span key={tech} style={{
                 fontFamily: monoFont,
                 fontSize: 11,
