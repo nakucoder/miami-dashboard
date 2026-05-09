@@ -495,7 +495,7 @@ export default function App() {
               <LineChart data={weatherHistory?.data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
-                <YAxis {...axisProps} tickFormatter={v => `${v}°`} />
+                <YAxis {...axisProps} tickFormatter={v => `${v}°`} domain={[40, 'auto']} />
                 <Tooltip {...ttProps} formatter={(v, name) => [`${v}°`, name === "temp" ? "Temp" : "Feels Like"]} labelFormatter={fmtXTick} />
                 <Legend formatter={v => v === "temp" ? "Temp" : "Feels Like"} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
                 <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
@@ -589,7 +589,7 @@ export default function App() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={barData} layout="vertical" margin={{ top: 8, right: 70, left: 10, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" {...axisProps} tickFormatter={v => `${v}%`} />
+              <XAxis type="number" {...axisProps} tickFormatter={v => `${v}%`} domain={[dataMin => Math.min(dataMin, -0.1), dataMax => Math.max(dataMax, 0.1)]} />
               <YAxis type="category" dataKey="sym" {...axisProps} width={45} />
               <Tooltip {...ttProps} formatter={v => [`${v.toFixed(2)}%`, "Change"]} />
               <Bar dataKey="change" radius={[0, 4, 4, 0]}>
