@@ -173,11 +173,10 @@ export default function App() {
     const data = (weatherHistory?.data ?? []).filter(d => d.temp != null);
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ flexShrink: 0, marginBottom: 10 }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>temperature history</span>
-          {mobileBackNav("weather")}
         </div>
-        <div style={{ flex: 1, minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center" }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
               <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
@@ -202,9 +201,8 @@ export default function App() {
     })) : [];
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ flexShrink: 0, marginBottom: 10 }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>% change from start</span>
-          {mobileBackNav("crypto")}
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -235,9 +233,8 @@ export default function App() {
       .sort((a, b) => b.change - a.change);
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ flexShrink: 0, marginBottom: 10 }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", fontFamily: monoFont }}>daily % change</span>
-          {mobileBackNav("stocks")}
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -818,9 +815,12 @@ export default function App() {
                     background: "rgba(15, 23, 42, 0.7)", backdropFilter: "blur(12px)",
                     borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)", padding: 20,
                   }}>
-                    {activeIndex === 0 && renderMobileWeatherCard()}
-                    {activeIndex === 1 && renderCryptoCard()}
-                    {activeIndex === 2 && renderStocksCard()}
+                    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                      {activeIndex === 0 && renderMobileWeatherCard()}
+                      {activeIndex === 1 && renderCryptoCard()}
+                      {activeIndex === 2 && renderStocksCard()}
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: "center", fontSize: 9, color: "#334155", fontFamily: monoFont, marginTop: 4 }}>tap to flip</div>
                   </div>
                   {/* Back face */}
                   <div style={{
