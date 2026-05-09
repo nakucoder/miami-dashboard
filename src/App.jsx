@@ -865,6 +865,108 @@ export default function App() {
                 <div style={tile({ minHeight: 360, overflow: "hidden" })}>{renderCryptoCard()}</div>
                 <div style={tile({ minHeight: 360, overflow: "hidden" })}>{renderStocksCard()}</div>
               </div>
+              {/* Landscape history card */}
+              <div style={{ ...tile({ padding: 20, marginTop: 16 }), display: "flex", flexDirection: "column" }}>
+                {/* Tab buttons */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 14, flexShrink: 0 }}>
+                  {["weather", "crypto", "stocks"].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setHistoryTab(tab)}
+                      style={{
+                        background: historyTab === tab ? "rgba(255,255,255,0.1)" : "transparent",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: 8,
+                        color: historyTab === tab ? "#e2e8f0" : "#64748b",
+                        fontSize: 11,
+                        fontFamily: monoFont,
+                        padding: "4px 14px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Weather tab */}
+                {historyTab === "weather" && (() => {
+                  const data = (weatherHistory?.data ?? []).filter(d => d.temp != null);
+                  return (
+                    <div style={{ height: 220, minWidth: 0 }}>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                          <YAxis domain={[40, 'auto']} tickFormatter={v => `${v}°`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={28} tickLine={false} axisLine={false} />
+                          <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
+                          <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                          <Line type="monotone" dataKey="feels_like" stroke="#eab308" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })()}
+
+                {/* Crypto tab */}
+                {historyTab === "crypto" && (() => {
+                  const raw = (cryptoHistory?.data ?? []).filter(d => d.btc != null && d.eth != null && d.sol != null);
+                  const first = raw[0];
+                  const normData = first ? raw.map(d => ({
+                    time: d.time,
+                    BTC: parseFloat(((d.btc - first.btc) / first.btc * 100).toFixed(2)),
+                    ETH: parseFloat(((d.eth - first.eth) / first.eth * 100).toFixed(2)),
+                    SOL: parseFloat(((d.sol - first.sol) / first.sol * 100).toFixed(2)),
+                  })) : [];
+                  return (
+                    <div style={{ height: 220, minWidth: 0 }}>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={normData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                          <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={32} tickLine={false} axisLine={false} />
+                          <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
+                          <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                          <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                          <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })()}
+
+                {/* Stocks tab */}
+                {historyTab === "stocks" && (() => {
+                  const history = stocksHistory?.data ?? [];
+                  const last = history[history.length - 1];
+                  const stocksObj = last?.stocks ?? last ?? {};
+                  const barData = Object.entries(stocksObj)
+                    .filter(([k]) => k !== "time" && k !== "timestamp")
+                    .map(([sym, val]) => {
+                      const pct = typeof val === "object" ? parseFloat(val.change_percent) : parseFloat(val);
+                      return { sym, change: isNaN(pct) ? null : pct };
+                    })
+                    .filter(d => d.change != null)
+                    .sort((a, b) => b.change - a.change);
+                  return (
+                    <div style={{ height: 220, minWidth: 0 }}>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 60, left: 10, bottom: 0 }}>
+                          <XAxis type="number" hide domain={[dataMin => Math.min(dataMin, -0.1), dataMax => Math.max(dataMax, 0.1)]} />
+                          <YAxis type="category" dataKey="sym" tick={{ fill: "#64748b", fontSize: 10, fontFamily: monoFont }} axisLine={false} tickLine={false} width={36} />
+                          <Bar dataKey="change" radius={[0, 3, 3, 0]}>
+                            {barData.map((entry, i) => (
+                              <Cell key={i} fill={entry.change >= 0 ? "#00c853" : "#ff5252"} />
+                            ))}
+                            <LabelList
+                              dataKey="change"
+                              position="right"
+                              formatter={v => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`}
+                              style={{ fill: "#94a3b8", fontSize: 10, fontFamily: monoFont }}
+                            />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           )}
         </main>
