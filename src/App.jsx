@@ -6,12 +6,12 @@ import {
   ResponsiveContainer, LabelList,
 } from "recharts";
 
-const W = "https://miami-dashboard.duckdns.org/weather";
-const C = "https://miami-dashboard.duckdns.org/crypto";
-const S = "https://miami-dashboard.duckdns.org/stocks";
-const WH = "https://miami-dashboard.duckdns.org/weather/history";
-const CH = "https://miami-dashboard.duckdns.org/crypto/history";
-const SH = "https://miami-dashboard.duckdns.org/stocks/history";
+const W = "https://nj6nmdc5ge.execute-api.us-east-2.amazonaws.com/prod/weather";
+const C = "https://nj6nmdc5ge.execute-api.us-east-2.amazonaws.com/prod/crypto";
+const S = "https://nj6nmdc5ge.execute-api.us-east-2.amazonaws.com/prod/stocks";
+const WH = "https://nj6nmdc5ge.execute-api.us-east-2.amazonaws.com/prod/weather/history";
+const CH = "https://nj6nmdc5ge.execute-api.us-east-2.amazonaws.com/prod/crypto/history";
+const SH = "https://nj6nmdc5ge.execute-api.us-east-2.amazonaws.com/prod/stocks/history";
 
 export default function App() {
   const [weather, setWeather] = useState(null);
@@ -34,10 +34,26 @@ export default function App() {
 
   const monoFont = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
+  const toMiamiTime = (utcTimeStr) => {
+    const [datePart, timePart] = utcTimeStr.split(" ");
+    const [month, day] = datePart.split("/");
+    const [hour, minute] = timePart.split(":");
+    const year = new Date().getFullYear();
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+    return utcDate.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).replace(",", "");
+  };
+
   const fetchAll = async () => {
     setLoading(true);
     try { const r = await axios.get(W, { timeout: 8000 }); setWeather(r.data); } catch { setWeather(null); }
-    try { const r = await axios.get(C, { timeout: 8000 }); setCrypto(r.data); } catch { setCrypto(null); }
+    try { const r = await axios.get(C, { timeout: 8000 }); setCrypto(r.data); } catch { }
     try { const r = await axios.get(S, { timeout: 8000 }); setStocks(r.data); } catch { setStocks(null); }
     setUpdated(new Date().toLocaleTimeString());
     setLoading(false);
@@ -122,8 +138,8 @@ export default function App() {
   const wxHL = todayHighLow(weather?.data?.hourly_forecast);
   const isWeekend = () => { const d = new Date().getDay(); return d === 0 || d === 6; };
   const lastTradingDay = () => { const d = new Date(); const day = d.getDay(); return day === 6 || day === 0 ? "Friday" : "Today"; };
-  const hasStockData = stocks?.data?.stocks && Object.keys(stocks.data.stocks).length > 0;
-  const marketClosed = isWeekend();
+  const hasStockData = stocks?.stocks && Object.keys(stocks.stocks).length > 0;
+  const marketClosed = stocks?.market_closed ?? false;
 
   const Skeleton = ({ w = "100%", h = "14px", mb = "0", br = "6px" }) => (
     <div style={{
@@ -171,7 +187,7 @@ export default function App() {
   );
 
   const renderMobileWeatherBack = () => {
-    const data = (weatherHistory?.data ?? []).filter(d => d.temp != null);
+    const data = (weatherHistory?.data ?? []).filter(d => d.temp != null).map(d => ({ ...d, time: d.time ? toMiamiTime(d.time) : d.time }));
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
         <div style={{ flexShrink: 0, marginBottom: 10 }}>
@@ -198,7 +214,7 @@ export default function App() {
     const raw = (cryptoHistory?.data ?? []).filter(d => d.btc != null && d.eth != null && d.sol != null);
     const first = raw[0];
     const normData = first ? raw.map(d => ({
-      time: d.time,
+      time: d.time ? toMiamiTime(d.time) : d.time,
       BTC: parseFloat(((d.btc - first.btc) / first.btc * 100).toFixed(2)),
       ETH: parseFloat(((d.eth - first.eth) / first.eth * 100).toFixed(2)),
       SOL: parseFloat(((d.sol - first.sol) / first.sol * 100).toFixed(2)),
@@ -269,6 +285,7 @@ export default function App() {
 
   // ─── WEATHER — desktop ────────────────────────────────────────────────────
   const renderWeatherCard = () => {
+    if (!weather || !weather.wind_speed_kmh) return null;
     if (!weather) {
       return (
         <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
@@ -290,27 +307,27 @@ export default function App() {
       );
     }
 
-    const windKmh = weather.data.wind_speed_kmh;
-    const fl = weather.data.feels_like_fahrenheit ?? feelsLike(weather.data.temperature_fahrenheit, windKmh);
-    const humidity = weather.data.hourly_forecast?.[0]?.humidity;
+    const windKmh = weather.wind_speed_kmh;
+    const fl = weather.feels_like_fahrenheit ?? feelsLike(weather.temperature_fahrenheit, windKmh);
+    const humidity = weather.hourly_forecast?.[0]?.humidity;
     const windMph = windKmh != null ? Math.round(windKmh * 0.621371) : null;
-    const high = weather.data.high_fahrenheit ?? wxHL.high;
-    const low = weather.data.low_fahrenheit ?? wxHL.low;
+    const high = weather.high_fahrenheit ?? wxHL.high;
+    const low = weather.low_fahrenheit ?? wxHL.low;
 
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
         <div style={{ flexShrink: 0, textAlign: "center", fontSize: 11, fontWeight: 600, letterSpacing: 1, color: "#94a3b8", textTransform: "uppercase" }}>
-          {weather.data.condition ?? wmoCondition(weather.data.weather_code)}
+          {weather.condition ?? wmoCondition(weather.weather_code)}
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 }}>
-          <div style={{ fontSize: 54, lineHeight: 1, flexShrink: 0 }}>{wmoIcon(weather.data.weather_code, weather.data.is_day)}</div>
-          <div style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -2, fontFamily: monoFont }}>{weather.data.temperature_fahrenheit}°</div>
+          <div style={{ fontSize: 54, lineHeight: 1, flexShrink: 0 }}>{wmoIcon(weather.weather_code, weather.is_day)}</div>
+          <div style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -2, fontFamily: monoFont }}>{weather.temperature_fahrenheit}°</div>
         </div>
         <div style={{ flexShrink: 0, textAlign: "center", fontSize: 11, color: "#64748b" }}>Feels like {fl}°</div>
         <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 12, fontSize: 10, color: "#94a3b8" }}>
           {high != null && <span>H: {high}°&nbsp;&nbsp;L: {low}°</span>}
-          {weather.data.sunrise && <span>🌅 {formatTime(weather.data.sunrise)}</span>}
-          {weather.data.sunset && <span>🌇 {formatTime(weather.data.sunset)}</span>}
+          {weather.sunrise && <span>🌅 {formatTime(weather.sunrise)}</span>}
+          {weather.sunset && <span>🌇 {formatTime(weather.sunset)}</span>}
         </div>
         <div style={{ flexShrink: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
           <div style={{ textAlign: "center", fontSize: 10, color: "#94a3b8", background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "6px 4px" }}>
@@ -321,13 +338,13 @@ export default function App() {
           </div>
         </div>
         <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
-          {!weather.data.hourly_forecast ? (
+          {!weather.hourly_forecast ? (
             <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
               {[0, 1, 2, 3, 4, 5].map(i => <Skeleton key={i} w="22px" h="36px" br="4px" />)}
             </div>
           ) : (
             <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
-              {weather.data.hourly_forecast.slice(0, 6).map((h, i) => (
+              {weather.hourly_forecast.slice(0, 6).map((h, i) => (
                 <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, minWidth: 0 }}>
                   <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{i === 0 ? "Now" : formatHour(h.time)}</span>
                   <span style={{ fontSize: 14 }}>{(h.precipitation_probability || 0) > 30 ? "🌧" : "☀"}</span>
@@ -364,25 +381,25 @@ export default function App() {
       );
     }
 
-    const windKmh = weather.data.wind_speed_kmh;
-    const fl = feelsLike(weather.data.temperature_fahrenheit, windKmh);
-    const humidity = weather.data.hourly_forecast?.[0]?.humidity;
+    const windKmh = weather.wind_speed_kmh;
+    const fl = feelsLike(weather.temperature_fahrenheit, windKmh);
+    const humidity = weather.hourly_forecast?.[0]?.humidity;
     const windMph = windKmh != null ? Math.round(windKmh / 1.60934) : null;
 
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
         <div style={{ flexShrink: 0, textAlign: "center", fontSize: 11, fontWeight: 600, letterSpacing: 1, color: "#94a3b8", textTransform: "uppercase" }}>
-          {wmoCondition(weather.data.weather_code)}
+          {wmoCondition(weather.weather_code)}
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 }}>
-          <div style={{ fontSize: 54, lineHeight: 1, flexShrink: 0 }}>{wmoIcon(weather.data.weather_code, weather.data.is_day)}</div>
-          <div style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -2, fontFamily: monoFont }}>{weather.data.temperature_fahrenheit}°</div>
+          <div style={{ fontSize: 54, lineHeight: 1, flexShrink: 0 }}>{wmoIcon(weather.weather_code, weather.is_day)}</div>
+          <div style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -2, fontFamily: monoFont }}>{weather.temperature_fahrenheit}°</div>
         </div>
         <div style={{ flexShrink: 0, textAlign: "center", fontSize: 11, color: "#64748b" }}>Feels like {fl}°</div>
         <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 12, fontSize: 10, color: "#94a3b8" }}>
           {wxHL.high != null && <span>H: {wxHL.high}°&nbsp;&nbsp;L: {wxHL.low}°</span>}
-          {weather.data.sunrise && <span>🌅 {formatTime(weather.data.sunrise)}</span>}
-          {weather.data.sunset && <span>🌇 {formatTime(weather.data.sunset)}</span>}
+          {weather.sunrise && <span>🌅 {formatTime(weather.sunrise)}</span>}
+          {weather.sunset && <span>🌇 {formatTime(weather.sunset)}</span>}
         </div>
         <div style={{ flexShrink: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
           <div style={{ textAlign: "center", fontSize: 10, color: "#94a3b8", background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "6px 4px" }}>
@@ -393,13 +410,13 @@ export default function App() {
           </div>
         </div>
         <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
-          {!weather.data.hourly_forecast ? (
+          {!weather.hourly_forecast ? (
             <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
               {[0, 1, 2, 3, 4, 5].map(i => <Skeleton key={i} w="22px" h="32px" br="4px" />)}
             </div>
           ) : (
             <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
-              {weather.data.hourly_forecast.slice(0, 6).map((h, i) => (
+              {weather.hourly_forecast.slice(0, 6).map((h, i) => (
                 <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontSize: 9, minWidth: 0 }}>
                   <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{i === 0 ? "Now" : formatHour(h.time)}</span>
                   <span style={{ fontSize: 13 }}>{(h.precipitation_probability || 0) > 30 ? "🌧" : "☀"}</span>
@@ -414,14 +431,16 @@ export default function App() {
   };
 
   // ─── CRYPTO ───────────────────────────────────────────────────────────────
-  const renderCryptoCard = () => (
+  const renderCryptoCard = () => {
+    if (!crypto || !crypto.prices) return null;
+    return (
     <>
       <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
         <div style={{ fontSize: 48, lineHeight: 1 }}>₿</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 6 }}>
         {cryptoCoins.map(([k, name, sym]) => {
-          const coin = crypto?.data?.prices?.[k];
+          const coin = crypto?.prices?.[k];
           if (!coin) {
             return (
               <div key={k} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-evenly", padding: 10, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(248,165,194,0.1)" }}>
@@ -479,10 +498,13 @@ export default function App() {
         })}
       </div>
     </>
-  );
+    );
+  };
 
   // ─── STOCKS ───────────────────────────────────────────────────────────────
-  const renderStocksCard = () => (
+  const renderStocksCard = () => {
+    if (!stocks || !stocks.stocks) return null;
+    return (
     <>
       <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
@@ -501,7 +523,7 @@ export default function App() {
         }}>
           <span>🔒</span>
           <div>
-            <div style={{ fontWeight: 600, color: "#a855f7" }}>Market Closed</div>
+            <div style={{ fontWeight: 600, color: "#a855f7" }}>Weekend — Market Closed</div>
             <div style={{ color: "#64748b", lineHeight: 1.3 }}>Showing {lastTradingDay()}'s data</div>
           </div>
         </div>
@@ -519,7 +541,7 @@ export default function App() {
           </div>
         ))
       ) : (
-        Object.entries(stocks.data.stocks).map(([sym, stock]) => {
+        Object.entries(stocks.stocks).map(([sym, stock]) => {
           const change = parseFloat(stock.change_percent);
           const isUp = change >= 0;
           return (
@@ -570,7 +592,8 @@ export default function App() {
         })
       )}
     </>
-  );
+    );
+  };
 
   // ─── HISTORICAL ───────────────────────────────────────────────────────────
   const renderHistorySection = () => {
@@ -600,11 +623,12 @@ export default function App() {
     const empty = (msg) => <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 60 }}>{msg}</div>;
 
     const renderWeatherTab = () => {
-      if (!weatherHistory) return empty("Loading weather history…");
+      if (!weatherHistory?.data) return empty("Loading weather history…");
+      const chartData = weatherHistory.data.map(d => ({ ...d, time: d.time ? toMiamiTime(d.time) : d.time }));
       return (
         <div style={{ flex: 1, minHeight: 0, height: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={weatherHistory?.data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ top: 8, right: 24, left: 4, bottom: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis dataKey="time" tickFormatter={fmtXTick} {...axisProps} interval="preserveStartEnd" />
                 <YAxis {...axisProps} tickFormatter={v => `${v}°`} domain={[40, 'auto']} />
@@ -619,10 +643,10 @@ export default function App() {
     };
 
     const renderCryptoTab = () => {
-      if (!cryptoHistory) return empty("Loading crypto history…");
+      if (!cryptoHistory?.data) return empty("Loading crypto history…");
 
       const dualPanel = (k1, k2, c1, c2, l1, l2) => {
-        const data = cryptoHistory?.data ?? [];
+        const data = (cryptoHistory?.data ?? []).map(d => ({ ...d, time: d.time ? toMiamiTime(d.time) : d.time }));
         return (
           <div style={panelBox}>
             <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, fontFamily: monoFont, marginBottom: 6, paddingLeft: 8 }}>
@@ -648,7 +672,7 @@ export default function App() {
       const allData = cryptoHistory?.data ?? [];
       const first = allData[0];
       const normData = first ? allData.map(d => ({
-        time: d.time,
+        time: d.time ? toMiamiTime(d.time) : d.time,
         BTC: parseFloat(((d.btc - first.btc) / first.btc * 100).toFixed(2)),
         ETH: parseFloat(((d.eth - first.eth) / first.eth * 100).toFixed(2)),
         SOL: parseFloat(((d.sol - first.sol) / first.sol * 100).toFixed(2)),
@@ -683,7 +707,7 @@ export default function App() {
     };
 
     const renderStocksTab = () => {
-      if (!stocksHistory) return empty("Loading stocks history…");
+      if (!stocksHistory?.data) return empty("Loading stocks history…");
       const history = stocksHistory.data ?? [];
       const last = history[history.length - 1];
       const stocksObj = last?.stocks ?? last ?? {};
@@ -965,7 +989,7 @@ export default function App() {
 
                 {/* Weather tab */}
                 {historyTab === "weather" && (() => {
-                  const data = (weatherHistory?.data ?? []).filter(d => d.temp != null);
+                  const data = (weatherHistory?.data ?? []).filter(d => d.temp != null).map(d => ({ ...d, time: d.time ? toMiamiTime(d.time) : d.time }));
                   return (
                     <div style={{ height: 220, minWidth: 0 }}>
                       <ResponsiveContainer width="100%" height={220}>
@@ -985,7 +1009,7 @@ export default function App() {
                   const raw = (cryptoHistory?.data ?? []).filter(d => d.btc != null && d.eth != null && d.sol != null);
                   const first = raw[0];
                   const normData = first ? raw.map(d => ({
-                    time: d.time,
+                    time: d.time ? toMiamiTime(d.time) : d.time,
                     BTC: parseFloat(((d.btc - first.btc) / first.btc * 100).toFixed(2)),
                     ETH: parseFloat(((d.eth - first.eth) / first.eth * 100).toFixed(2)),
                     SOL: parseFloat(((d.sol - first.sol) / first.sol * 100).toFixed(2)),
