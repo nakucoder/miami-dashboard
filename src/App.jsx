@@ -50,6 +50,12 @@ export default function App() {
     }).replace(",", "");
   };
 
+  const fmtXTick = (val) => {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", hour12: true });
+  };
+
   const fetchAll = async () => {
     setLoading(true);
     try { const r = await axios.get(W, { timeout: 8000 }); setWeather(r.data); } catch { setWeather(null); }
@@ -196,9 +202,18 @@ export default function App() {
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <div style={{ height: 280, minWidth: 0 }}>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} cursor={{ stroke: "rgba(255,255,255,0.2)", strokeWidth: 1 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="time" hide />
                 <YAxis domain={[40, 'auto']} tickFormatter={v => `${v}°`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={28} tickLine={false} axisLine={false} />
                 <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
+                <Tooltip
+                  contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 10 }}
+                  labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                  itemStyle={{ color: "#e2e8f0" }}
+                  formatter={(v, name) => [`${v}°`, name === "temp" ? "Temp" : "Feels Like"]}
+                  labelFormatter={fmtXTick}
+                />
                 <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                 <Line type="monotone" dataKey="feels_like" stroke="#eab308" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
               </LineChart>
@@ -227,9 +242,18 @@ export default function App() {
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <div style={{ height: 280, minWidth: 0 }}>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={normData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <LineChart data={normData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} cursor={{ stroke: "rgba(255,255,255,0.2)", strokeWidth: 1 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="time" hide />
                 <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={32} tickLine={false} axisLine={false} />
                 <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
+                <Tooltip
+                  contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 10 }}
+                  labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                  itemStyle={{ color: "#e2e8f0" }}
+                  formatter={(v, name) => [`${v}%`, name]}
+                  labelFormatter={fmtXTick}
+                />
                 <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                 <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                 <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
@@ -264,6 +288,13 @@ export default function App() {
             <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 44, left: 10, bottom: 0 }}>
               <XAxis type="number" hide domain={[dataMin => Math.min(dataMin, -0.1), dataMax => Math.max(dataMax, 0.1)]} />
               <YAxis type="category" dataKey="sym" tick={{ fill: "#64748b", fontSize: 10, fontFamily: monoFont }} axisLine={false} tickLine={false} width={36} />
+              <Tooltip
+                contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 10 }}
+                labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                itemStyle={{ color: "#e2e8f0" }}
+                formatter={v => [`${v.toFixed(2)}%`, "Change"]}
+                labelFormatter={label => label ?? ""}
+              />
               <Bar dataKey="change" radius={[0, 3, 3, 0]}>
                 {barData.map((entry, i) => (
                   <Cell key={i} fill={entry.change >= 0 ? "#00c853" : "#ff5252"} />
@@ -506,7 +537,7 @@ export default function App() {
     if (!stocks || !stocks.stocks) return null;
     return (
     <>
-      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
           <rect x="1" y="11" width="3" height="8" rx="1" fill="#475569" />
           <rect x="6" y="7" width="3" height="12" rx="1" fill="#64748b" />
@@ -518,13 +549,13 @@ export default function App() {
 
       {marketClosed && (
         <div style={{
-          background: "rgba(168,85,247,0.06)", borderRadius: 8, padding: "10px 12px",
-          display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexShrink: 0, fontSize: 10,
+          background: "rgba(168,85,247,0.06)", borderRadius: 8, padding: "4px 10px",
+          display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexShrink: 0,
         }}>
-          <span>🔒</span>
-          <div>
-            <div style={{ fontWeight: 600, color: "#a855f7" }}>Weekend — Market Closed</div>
-            <div style={{ color: "#64748b", lineHeight: 1.3 }}>Showing {lastTradingDay()}'s data</div>
+          <span style={{ fontSize: 10 }}>🔒</span>
+          <div style={{ fontSize: 10, lineHeight: 1.3 }}>
+            <span style={{ fontWeight: 600, color: "#a855f7" }}>Weekend — Market Closed</span>
+            <span style={{ color: "#64748b", marginLeft: 6 }}>Showing {lastTradingDay()}'s data</span>
           </div>
         </div>
       )}
@@ -547,11 +578,11 @@ export default function App() {
           return (
             <div key={sym} style={{
               flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between",
-              padding: 14, borderRadius: 16,
+              padding: "14px 14px 6px", borderRadius: 16,
               background: "rgba(255,255,255,0.03)",
               border: `1px solid ${isUp ? "rgba(0,255,136,0.16)" : "rgba(255,71,87,0.16)"}`,
               borderLeft: `4px solid ${isUp ? "#00ff88" : "#ff4757"}`,
-              gap: 10,
+              gap: 6,
             }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, overflow: "hidden" }}>
@@ -601,12 +632,6 @@ export default function App() {
       Math.abs(v) >= 10000 ? `$${(v / 1000).toFixed(0)}k`
       : Math.abs(v) >= 1000  ? `$${(v / 1000).toFixed(1)}k`
       :                        `$${v.toFixed(0)}`;
-
-    const fmtXTick = (val) => {
-      const d = new Date(val);
-      if (isNaN(d.getTime())) return "";
-      return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", hour12: true });
-    };
 
     const gridProps = { stroke: "rgba(255,255,255,0.06)", strokeDasharray: "3 3" };
     const axisProps = {
@@ -799,7 +824,7 @@ export default function App() {
 
           {/* Tech stack badges */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-            {["FastAPI", "APScheduler", "Docker", "AWS EC2", "AWS S3", "React", "Recharts", "Nginx", "GitHub Actions", "Vercel"].map(tech => (
+            {["FastAPI", "AWS Lambda", "EventBridge", "API Gateway", "AWS S3", "React", "Recharts", "CloudWatch", "Vercel"].map(tech => (
               <span key={tech} style={{
                 fontFamily: monoFont,
                 fontSize: 11,
@@ -993,9 +1018,18 @@ export default function App() {
                   return (
                     <div style={{ height: 220, minWidth: 0 }}>
                       <ResponsiveContainer width="100%" height={220}>
-                        <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                        <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }} cursor={{ stroke: "rgba(255,255,255,0.2)", strokeWidth: 1 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="time" hide />
                           <YAxis domain={[40, 'auto']} tickFormatter={v => `${v}°`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={28} tickLine={false} axisLine={false} />
                           <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} formatter={v => v === "temp" ? "Temp" : "Feels Like"} />
+                          <Tooltip
+                            contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 10 }}
+                            labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                            itemStyle={{ color: "#e2e8f0" }}
+                            formatter={(v, name) => [`${v}°`, name === "temp" ? "Temp" : "Feels Like"]}
+                            labelFormatter={fmtXTick}
+                          />
                           <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                           <Line type="monotone" dataKey="feels_like" stroke="#eab308" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                         </LineChart>
@@ -1017,9 +1051,18 @@ export default function App() {
                   return (
                     <div style={{ height: 220, minWidth: 0 }}>
                       <ResponsiveContainer width="100%" height={220}>
-                        <LineChart data={normData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                        <LineChart data={normData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }} cursor={{ stroke: "rgba(255,255,255,0.2)", strokeWidth: 1 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="time" hide />
                           <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 9, fill: "#94a3b8" }} width={32} tickLine={false} axisLine={false} />
                           <Legend wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} />
+                          <Tooltip
+                            contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 10 }}
+                            labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                            itemStyle={{ color: "#e2e8f0" }}
+                            formatter={(v, name) => [`${v}%`, name]}
+                            labelFormatter={fmtXTick}
+                          />
                           <Line type="monotone" dataKey="BTC" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                           <Line type="monotone" dataKey="ETH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
                           <Line type="monotone" dataKey="SOL" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
@@ -1048,6 +1091,13 @@ export default function App() {
                         <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 60, left: 10, bottom: 0 }}>
                           <XAxis type="number" hide domain={[dataMin => Math.min(dataMin, -0.1), dataMax => Math.max(dataMax, 0.1)]} />
                           <YAxis type="category" dataKey="sym" tick={{ fill: "#64748b", fontSize: 10, fontFamily: monoFont }} axisLine={false} tickLine={false} width={36} />
+                          <Tooltip
+                            contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 10 }}
+                            labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                            itemStyle={{ color: "#e2e8f0" }}
+                            formatter={v => [`${v.toFixed(2)}%`, "Change"]}
+                            labelFormatter={label => label ?? ""}
+                          />
                           <Bar dataKey="change" radius={[0, 3, 3, 0]}>
                             {barData.map((entry, i) => (
                               <Cell key={i} fill={entry.change >= 0 ? "#00c853" : "#ff5252"} />
